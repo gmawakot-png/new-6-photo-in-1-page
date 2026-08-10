@@ -119,7 +119,7 @@
             position: relative;
             height: 100%;
             width: 100%;
-            min-height: 130px;
+            min-height: 130px; /* Prevent toolbar collapsing */
             box-sizing: border-box;
             transition: border 0.15s ease;
             box-shadow: none !important;
@@ -199,6 +199,7 @@
             display: block;
             overflow: visible !important;
         }
+        /* The editing frame must always hug the actual photo area. */
         .img-wrapper {
             position: relative;
             overflow: visible !important;
@@ -223,6 +224,7 @@
         }
         #sidebarPhotoSize { display: block; font-size: 11px; color: #00ffcc; font-weight: bold; margin: 2px 0 6px; text-align: center; }
 
+        /* TOOLBAR FIX: PREVENT SHRINKING, KEEP READABLE AT ALL TIMES */
         .photo-toolbar {
             display: none !important;
             background: #0f172a;
@@ -648,29 +650,24 @@
         }
         .preset-btn:hover { opacity: 0.9; }
 
-        #printAreaContainer { display: none; }
+        #printAreaContainer { display: none; background: #fff; }
         
-        /* FIX FOR GITHUB PAGES PRINTING ISSUE */
         @media print {
-            html, body {
-                height: auto !important;
-                overflow: visible !important;
-                background: #ffffff !important;
-            }
-            body * {
-                visibility: hidden !important;
-            }
-            #printAreaContainer, #printAreaContainer * {
-                visibility: visible !important;
-            }
+            html, body { background: #fff !important; color: #000 !important; }
+            body * { visibility: hidden; }
+            #printAreaContainer, #printAreaContainer * { visibility: visible; }
             #printAreaContainer {
-                display: block !important;
-                position: absolute !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                position: fixed !important;
                 left: 0 !important;
                 top: 0 !important;
                 width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                min-height: 100vh !important;
+                background: #fff !important;
+                z-index: 2147483647 !important;
             }
             .print-page-wrapper {
                 page-break-after: always;
@@ -678,13 +675,25 @@
                 width: 210mm !important;
                 height: 297mm !important;
                 margin: 0 auto !important;
-                padding: 0 !important;
+                padding: 8mm !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
                 position: relative !important;
                 overflow: hidden !important;
+            }
+            .print-page-wrapper .a4-preview-grid {
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+            }
+            .print-page-wrapper img {
+                object-fit: fill;
+            }
+            .print-page-wrapper {
+                display: flex !important;
+                visibility: visible !important;
             }
             .print-page-wrapper > img {
                 display: block !important;
@@ -698,6 +707,7 @@
             }
         }
     
+        /* FINAL PHOTO FRAME FIX: handles are always centered exactly on photo corners. */
         .img-wrapper { position: relative !important; overflow: visible !important; }
         .img-wrapper .resize-handle { z-index: 9999 !important; pointer-events: auto !important; }
         .photo-card { overflow: visible !important; }
@@ -768,7 +778,7 @@
     <!-- Hidden Container for Printing -->
     <div id="printAreaContainer"></div>
 
-    <!-- Photo action sidebar -->
+    <!-- Photo action sidebar: shown only after a photo is clicked -->
     <aside id="photoActionSidebar" aria-label="Photo actions">
         <div class="sidebar-title">📷 Photo Tools</div>
         <div id="sidebarPhotoName" class="sidebar-photo-name"></div>
@@ -823,7 +833,7 @@
         </div>
     </div>
 
-    <!-- SIZE MODAL -->
+    <!-- SIZE MODAL: PRESETS + ORIGINAL SIZE (EDITABLE) -->
     <div id="sizeModal" class="custom-modal">
         <div class="modal-content" id="sizeModalContent">
             <div class="modal-header-drag" id="sizeModalHeader">🖐️ Photo Dimensions Editor</div>
@@ -832,6 +842,7 @@
             <p id="sizeModalFileName" style="font-size: 11px; color: #666; margin: 2px 0;"></p>
             
             <div style="margin: 10px 0; padding: 8px; background: #f8f9fa; border: 1px solid #007bff; border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- OPTION 1: 10 x 7 -->
                 <div>
                     <button id="preset10x7Btn" class="preset-btn" style="background: #17a2b8; color: white;">
                         🪪 Aadhaar: 10 x 7 cm
@@ -839,6 +850,7 @@
                     <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Aadhaar / ID Card)</span>
                 </div>
 
+                <!-- OPTION 2: 15 x 12 -->
                 <div>
                     <button id="preset15x12Btn" class="preset-btn" style="background: #6f42c1; color: white;">
                         📘 Bank Passbook: 15 x 12 cm
@@ -846,6 +858,7 @@
                     <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Bank Passbook)</span>
                 </div>
 
+                <!-- OPTION 3: LANDSCAPE 28 x 19 -->
                 <div>
                     <button id="preset28x20Btn" class="preset-btn" style="background: #fd7e14; color: white;">
                         🖼️ Landscape Photo: 28 x 19 cm
@@ -854,6 +867,7 @@
                 </div>
             </div>
 
+            <!-- ORIGINAL PHOTO SIZE: editable directly in the same fields -->
             <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px; text-align: left;">
                 <div style="margin: 6px 0;">
                     <label style="font-size: 11px; font-weight: bold;">Unit:</label>
@@ -1073,6 +1087,7 @@
         let currentPage = 1;
         let currentScale = 1;
 
+        // UNDO / REDO HISTORY STACKS
         let actionHistory = [];
         let redoHistory = [];
         const MAX_HISTORY = 40;
@@ -1172,12 +1187,13 @@
 
         function getPageConfig(p) {
             if (!pageConfigs[p]) {
-                pageConfigs[p] = { rows: 3, cols: 2, gap: 5, free: false };
+                pageConfigs[p] = { rows: 3, cols: 2, gap: 5, free: false, layoutCustomized: false };
             } else {
                 pageConfigs[p].rows = Math.max(1, parseInt(pageConfigs[p].rows) || 3);
                 pageConfigs[p].cols = Math.max(1, parseInt(pageConfigs[p].cols) || 2);
                 pageConfigs[p].gap = Math.max(0, parseInt(pageConfigs[p].gap) || 5);
                 if (typeof pageConfigs[p].free !== 'boolean') pageConfigs[p].free = false;
+                if (typeof pageConfigs[p].layoutCustomized !== 'boolean') pageConfigs[p].layoutCustomized = false;
             }
             return pageConfigs[p];
         }
@@ -1396,9 +1412,26 @@
                 if (!cfg.free) {
                     const capacity = Math.max(1, (cfg.rows || 1) * (cfg.cols || 1));
                     if (usedOnPage >= capacity) {
+                        const previousPageConfig = {
+                            rows: cfg.rows,
+                            cols: cfg.cols,
+                            gap: cfg.gap,
+                            free: cfg.free
+                        };
+
                         targetPage++;
                         usedOnPage = 0;
-                        getPageConfig(targetPage);
+
+                        // नई/खाली और manually customized न की गई page पर
+                        // पिछली page का वही layout लागू करें। इससे 1x1, 2x3 आदि
+                        // में bulk upload करने पर सभी नई pages उसी format में रहेंगी।
+                        cfg = getPageConfig(targetPage);
+                        if (getPagePhotoIndices(targetPage).length === 0 && !cfg.layoutCustomized) {
+                            cfg.rows = previousPageConfig.rows;
+                            cfg.cols = previousPageConfig.cols;
+                            cfg.gap = previousPageConfig.gap;
+                            cfg.free = previousPageConfig.free;
+                        }
                     }
                 }
                 np.page = targetPage;
@@ -1535,6 +1568,15 @@
                 const nextPage = page + 1;
                 const nextCfg = getPageConfig(nextPage);
 
+                // यदि अगला पेज खाली और अभी manually customized नहीं है,
+                // तो current page का layout उसी पर भी लागू करें।
+                if (getPagePhotoIndices(nextPage).length === 0 && !nextCfg.layoutCustomized) {
+                    nextCfg.rows = cfg.rows;
+                    nextCfg.cols = cfg.cols;
+                    nextCfg.gap = cfg.gap;
+                    nextCfg.free = cfg.free;
+                }
+
                 overflow.forEach(idx => {
                     photos[idx].page = nextPage;
                     if (!nextCfg.free) {
@@ -1552,6 +1594,7 @@
             const cfg = getPageConfig(page);
             if (!cfg.free) {
                 cfg.rows = Math.min(Math.max(parseInt(rowsInput.value) || 1, 1), 10);
+                cfg.layoutCustomized = true;
                 rebalanceOverflowFromPage(page);
             }
             refreshAll();
@@ -1563,6 +1606,7 @@
             const cfg = getPageConfig(page);
             if (!cfg.free) {
                 cfg.cols = Math.min(Math.max(parseInt(columnsInput.value) || 1, 1), 10);
+                cfg.layoutCustomized = true;
                 rebalanceOverflowFromPage(page);
             }
             refreshAll();
@@ -1571,6 +1615,7 @@
         gapInput.addEventListener('input', () => {
             const cfg = getPageConfig(currentPage);
             cfg.gap = parseInt(gapInput.value) || 0;
+            cfg.layoutCustomized = true;
             refreshAll();
         });
 
@@ -1608,7 +1653,7 @@
             tempContainer.style.width = '210mm';
             tempContainer.style.height = '297mm';
             tempContainer.style.backgroundColor = '#ffffff';
-            tempContainer.style.padding = '8mm';
+            tempContainer.style.padding = '8mm'; // 8mm Safe margin for print centering
             tempContainer.style.boxSizing = 'border-box';
             tempContainer.style.overflow = 'hidden';
 
@@ -1740,42 +1785,77 @@
             }
         });
 
-        // OPTIMIZED FOR GITHUB PAGES PRINTING
         printButton.addEventListener('click', async () => {
+            // LOW-MEMORY PRINT: render each page to a small JPEG buffer before
+            // adding it to the PDF. Never keep the large canvas or a PNG/dataURL
+            // for more than one page. This is intentionally isolated to Print.
+            let pdf = null;
             try {
-                showLoading('प्रिन्ट पेज तैयार हो रहे हैं...');
-                printAreaContainer.innerHTML = '';
+                showLoading('प्रिन्ट PDF तैयार हो रही है...');
+                const { jsPDF } = window.jspdf;
                 const totalPages = getTotalPages();
+                pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+
+                // A4 print raster. 150 DPI is more than adequate for normal
+                // photo printing while using roughly one quarter of the pixels
+                // of the previous high-resolution path.
+                const PRINT_W = 1240;
+                const PRINT_H = 1754;
 
                 for (let p = 1; p <= totalPages; p++) {
-                    const canvas = await capturePageAsCanvasSilent(p, 2);
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'print-page-wrapper';
+                    const sourceCanvas = await capturePageAsCanvasSilent(p, 1.0);
 
-                    const img = document.createElement('img');
-                    img.src = canvas.toDataURL('image/png');
-                    img.alt = `Print Page ${p}`;
-                    wrapper.appendChild(img);
-                    printAreaContainer.appendChild(wrapper);
+                    // Resize into a bounded canvas so jsPDF never receives the
+                    // larger html2canvas RGBA buffer.
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = PRINT_W;
+                    pageCanvas.height = PRINT_H;
+                    const pageCtx = pageCanvas.getContext('2d', { alpha: false });
+                    pageCtx.fillStyle = '#ffffff';
+                    pageCtx.fillRect(0, 0, PRINT_W, PRINT_H);
+                    pageCtx.drawImage(sourceCanvas, 0, 0, PRINT_W, PRINT_H);
+
+                    // Convert only this page to a compressed JPEG.
+                    const jpegData = pageCanvas.toDataURL('image/jpeg', 0.72);
+
+                    if (p > 1) pdf.addPage('a4', 'p');
+                    pdf.addImage(jpegData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+
+                    // Release both raster buffers immediately.
+                    sourceCanvas.width = 1;
+                    sourceCanvas.height = 1;
+                    pageCanvas.width = 1;
+                    pageCanvas.height = 1;
+
+                    // Let Chrome process pending cleanup before the next page.
+                    await new Promise(resolve => setTimeout(resolve, 25));
                 }
 
-                const printImages = Array.from(printAreaContainer.querySelectorAll('img'));
-                await Promise.all(printImages.map(img => {
-                    if (img.complete) return Promise.resolve();
-                    return new Promise(resolve => {
-                        img.onload = resolve;
-                        img.onerror = resolve;
-                    });
-                }));
+                hideLoading();
 
+                // Open the completed PDF as a Blob. Only the compressed PDF is
+                // handed to Chrome; the temporary page canvases are already gone.
+                const pdfBlob = pdf.output('blob');
+                pdf = null;
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const printTab = window.open(pdfUrl, '_blank');
+
+                if (!printTab) {
+                    URL.revokeObjectURL(pdfUrl);
+                    alert('प्रिन्ट विंडो नहीं खुल सकी। कृपया ब्राउज़र में Pop-up की अनुमति दें।');
+                    return;
+                }
+
+                setTimeout(() => URL.revokeObjectURL(pdfUrl), 120000);
+            } catch (e) {
                 hideLoading();
-                
-                setTimeout(() => {
-                    window.print();
-                }, 250);
-            } catch(e) {
-                hideLoading();
-                alert('प्रिन्ट त्रुटि: ' + e.message);
+                pdf = null;
+                alert('प्रिन्ट त्रुटि: ' + (e && e.message ? e.message : e));
             }
         });
 
