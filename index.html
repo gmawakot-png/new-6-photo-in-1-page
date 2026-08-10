@@ -650,24 +650,20 @@
         }
         .preset-btn:hover { opacity: 0.9; }
 
-        #printAreaContainer { display: none; background: #fff; }
+        #printAreaContainer { display: none; }
         
         @media print {
-            html, body { background: #fff !important; color: #000 !important; }
             body * { visibility: hidden; }
             #printAreaContainer, #printAreaContainer * { visibility: visible; }
             #printAreaContainer {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
-                justify-content: flex-start !important;
-                position: fixed !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                min-height: 100vh !important;
-                background: #fff !important;
-                z-index: 2147483647 !important;
+                justify-content: center !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
             }
             .print-page-wrapper {
                 page-break-after: always;
@@ -1187,13 +1183,12 @@
 
         function getPageConfig(p) {
             if (!pageConfigs[p]) {
-                pageConfigs[p] = { rows: 3, cols: 2, gap: 5, free: false, layoutCustomized: false };
+                pageConfigs[p] = { rows: 3, cols: 2, gap: 5, free: false };
             } else {
                 pageConfigs[p].rows = Math.max(1, parseInt(pageConfigs[p].rows) || 3);
                 pageConfigs[p].cols = Math.max(1, parseInt(pageConfigs[p].cols) || 2);
                 pageConfigs[p].gap = Math.max(0, parseInt(pageConfigs[p].gap) || 5);
                 if (typeof pageConfigs[p].free !== 'boolean') pageConfigs[p].free = false;
-                if (typeof pageConfigs[p].layoutCustomized !== 'boolean') pageConfigs[p].layoutCustomized = false;
             }
             return pageConfigs[p];
         }
@@ -1412,26 +1407,9 @@
                 if (!cfg.free) {
                     const capacity = Math.max(1, (cfg.rows || 1) * (cfg.cols || 1));
                     if (usedOnPage >= capacity) {
-                        const previousPageConfig = {
-                            rows: cfg.rows,
-                            cols: cfg.cols,
-                            gap: cfg.gap,
-                            free: cfg.free
-                        };
-
                         targetPage++;
                         usedOnPage = 0;
-
-                        // नई/खाली और manually customized न की गई page पर
-                        // पिछली page का वही layout लागू करें। इससे 1x1, 2x3 आदि
-                        // में bulk upload करने पर सभी नई pages उसी format में रहेंगी।
-                        cfg = getPageConfig(targetPage);
-                        if (getPagePhotoIndices(targetPage).length === 0 && !cfg.layoutCustomized) {
-                            cfg.rows = previousPageConfig.rows;
-                            cfg.cols = previousPageConfig.cols;
-                            cfg.gap = previousPageConfig.gap;
-                            cfg.free = previousPageConfig.free;
-                        }
+                        getPageConfig(targetPage);
                     }
                 }
                 np.page = targetPage;
@@ -1568,15 +1546,6 @@
                 const nextPage = page + 1;
                 const nextCfg = getPageConfig(nextPage);
 
-                // यदि अगला पेज खाली और अभी manually customized नहीं है,
-                // तो current page का layout उसी पर भी लागू करें।
-                if (getPagePhotoIndices(nextPage).length === 0 && !nextCfg.layoutCustomized) {
-                    nextCfg.rows = cfg.rows;
-                    nextCfg.cols = cfg.cols;
-                    nextCfg.gap = cfg.gap;
-                    nextCfg.free = cfg.free;
-                }
-
                 overflow.forEach(idx => {
                     photos[idx].page = nextPage;
                     if (!nextCfg.free) {
@@ -1594,7 +1563,6 @@
             const cfg = getPageConfig(page);
             if (!cfg.free) {
                 cfg.rows = Math.min(Math.max(parseInt(rowsInput.value) || 1, 1), 10);
-                cfg.layoutCustomized = true;
                 rebalanceOverflowFromPage(page);
             }
             refreshAll();
@@ -1606,7 +1574,6 @@
             const cfg = getPageConfig(page);
             if (!cfg.free) {
                 cfg.cols = Math.min(Math.max(parseInt(columnsInput.value) || 1, 1), 10);
-                cfg.layoutCustomized = true;
                 rebalanceOverflowFromPage(page);
             }
             refreshAll();
@@ -1615,7 +1582,6 @@
         gapInput.addEventListener('input', () => {
             const cfg = getPageConfig(currentPage);
             cfg.gap = parseInt(gapInput.value) || 0;
-            cfg.layoutCustomized = true;
             refreshAll();
         });
 
@@ -1786,76 +1752,53 @@
         });
 
         printButton.addEventListener('click', async () => {
-            // LOW-MEMORY PRINT: render each page to a small JPEG buffer before
-            // adding it to the PDF. Never keep the large canvas or a PNG/dataURL
-            // for more than one page. This is intentionally isolated to Print.
-            let pdf = null;
             try {
-                showLoading('प्रिन्ट PDF तैयार हो रही है...');
-                const { jsPDF } = window.jspdf;
+                showLoading('प्रिन्ट पेज तैयार हो रहे हैं...');
+                printAreaContainer.innerHTML = '';
                 const totalPages = getTotalPages();
-                pdf = new jsPDF({
-                    orientation: 'p',
-                    unit: 'mm',
-                    format: 'a4',
-                    compress: true
-                });
-
-                // A4 print raster. 150 DPI is more than adequate for normal
-                // photo printing while using roughly one quarter of the pixels
-                // of the previous high-resolution path.
-                const PRINT_W = 1240;
-                const PRINT_H = 1754;
 
                 for (let p = 1; p <= totalPages; p++) {
-                    const sourceCanvas = await capturePageAsCanvasSilent(p, 1.0);
+                    const canvas = await capturePageAsCanvasSilent(p, 2);
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'print-page-wrapper';
+                    wrapper.style.width = '210mm';
+                    wrapper.style.height = '297mm';
+                    wrapper.style.margin = '0 auto';
+                    wrapper.style.padding = '8mm';
+                    wrapper.style.boxSizing = 'border-box';
+                    wrapper.style.overflow = 'hidden';
+                    wrapper.style.background = '#fff';
+                    wrapper.style.position = 'relative';
+                    wrapper.style.pageBreakAfter = p < totalPages ? 'always' : 'auto';
+                    wrapper.style.breakAfter = p < totalPages ? 'page' : 'auto';
 
-                    // Resize into a bounded canvas so jsPDF never receives the
-                    // larger html2canvas RGBA buffer.
-                    const pageCanvas = document.createElement('canvas');
-                    pageCanvas.width = PRINT_W;
-                    pageCanvas.height = PRINT_H;
-                    const pageCtx = pageCanvas.getContext('2d', { alpha: false });
-                    pageCtx.fillStyle = '#ffffff';
-                    pageCtx.fillRect(0, 0, PRINT_W, PRINT_H);
-                    pageCtx.drawImage(sourceCanvas, 0, 0, PRINT_W, PRINT_H);
-
-                    // Convert only this page to a compressed JPEG.
-                    const jpegData = pageCanvas.toDataURL('image/jpeg', 0.72);
-
-                    if (p > 1) pdf.addPage('a4', 'p');
-                    pdf.addImage(jpegData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-
-                    // Release both raster buffers immediately.
-                    sourceCanvas.width = 1;
-                    sourceCanvas.height = 1;
-                    pageCanvas.width = 1;
-                    pageCanvas.height = 1;
-
-                    // Let Chrome process pending cleanup before the next page.
-                    await new Promise(resolve => setTimeout(resolve, 25));
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.alt = `Print Page ${p}`;
+                    img.style.display = 'block';
+                    img.style.width = '210mm';
+                    img.style.height = '297mm';
+                    img.style.maxWidth = 'none';
+                    img.style.maxHeight = 'none';
+                    img.style.objectFit = 'fill';
+                    img.style.margin = '0 auto';
+                    wrapper.appendChild(img);
+                    printAreaContainer.appendChild(wrapper);
                 }
 
                 hideLoading();
-
-                // Open the completed PDF as a Blob. Only the compressed PDF is
-                // handed to Chrome; the temporary page canvases are already gone.
-                const pdfBlob = pdf.output('blob');
-                pdf = null;
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-                const printTab = window.open(pdfUrl, '_blank');
-
-                if (!printTab) {
-                    URL.revokeObjectURL(pdfUrl);
-                    alert('प्रिन्ट विंडो नहीं खुल सकी। कृपया ब्राउज़र में Pop-up की अनुमति दें।');
-                    return;
-                }
-
-                setTimeout(() => URL.revokeObjectURL(pdfUrl), 120000);
-            } catch (e) {
+                const printImages = Array.from(printAreaContainer.querySelectorAll('img'));
+                await Promise.all(printImages.map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    });
+                }));
+                requestAnimationFrame(() => setTimeout(() => window.print(), 50));
+            } catch(e) {
                 hideLoading();
-                pdf = null;
-                alert('प्रिन्ट त्रुटि: ' + (e && e.message ? e.message : e));
+                alert('प्रिन्ट त्रुटि: ' + e.message);
             }
         });
 
