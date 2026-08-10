@@ -1,0 +1,3628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Photo Selector Pro Ultimate HD</title>
+    
+    <!-- PDF.js Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- html2canvas & jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Cropper.js CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f6f9;
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 4px;
+        }
+        
+        .top-fixed-section {
+            flex-shrink: 0;
+            background: #f4f6f9;
+            z-index: 99;
+            padding: 2px 5px;
+        }
+
+        .header-title {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            display: inline-block;
+        }
+
+        .controls {
+            background: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            justify-content: center;
+            align-items: center;
+            font-size: 13px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .custom-file-input {
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .preview-scroll-container {
+            flex-grow: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 6px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .a4-preview-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            box-sizing: border-box;
+            background: transparent !important;
+        }
+        
+        .photo-card {
+            background: transparent !important;
+            border: 1px dashed rgba(0, 123, 255, 0.3);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: visible;
+            position: relative;
+            height: 100%;
+            width: 100%;
+            min-height: 130px; /* Prevent toolbar collapsing */
+            box-sizing: border-box;
+            transition: border 0.15s ease;
+            box-shadow: none !important;
+        }
+        
+        .photo-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+            cursor: grab;
+            background: transparent !important;
+            box-sizing: border-box;
+            min-height: 0;
+            user-select: none;
+        }
+        .photo-container:active { cursor: grabbing; }
+
+        .img-wrapper {
+            position: relative;
+            display: block;
+            flex: 0 0 auto;
+            justify-content: center;
+            align-items: center;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            box-sizing: border-box;
+            background: transparent !important;
+        }
+        .img-wrapper.stretch-mode { width: 100%; height: 100%; }
+        .free-layout .img-wrapper { max-width: none; max-height: none; flex: 0 0 auto; overflow: visible; }
+        .free-layout .photo-card, .free-layout .photo-container, .free-layout .img-wrapper { overflow: visible !important; }
+
+        /* RESIZE HANDLES */
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #ff5722;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            z-index: 30;
+            display: block;
+            box-shadow: 0 0 8px rgba(0,0,0,0.9);
+            cursor: pointer;
+        }
+        
+        .handle-tl { left: 0; top: 0; cursor: nwse-resize; }
+        .handle-tr { left: 100%; top: 0; cursor: nesw-resize; }
+        .handle-bl { left: 0; top: 100%; cursor: nesw-resize; }
+        .handle-br { left: 100%; top: 100%; cursor: nwse-resize; }
+        .handle-t  { left: 50%; top: 0; cursor: ns-resize; }
+        .handle-b  { left: 50%; top: 100%; cursor: ns-resize; }
+        .handle-l  { left: 0; top: 50%; cursor: ew-resize; }
+        .handle-r  { left: 100%; top: 50%; cursor: ew-resize; }
+
+        .a4-preview-grid.free-layout {
+            display: block !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .free-layout .photo-card {
+            position: absolute !important;
+            box-sizing: border-box;
+            min-height: 0 !important;
+            margin: 0;
+        }
+        .free-layout .photo-container {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: block;
+            overflow: visible !important;
+        }
+        /* The editing frame must always hug the actual photo area. */
+        .img-wrapper {
+            position: relative;
+            overflow: visible !important;
+        }
+        .img-wrapper > img {
+            position: relative;
+            z-index: 1;
+        }
+        .a4-preview-grid:not(.free-layout) .photo-card { min-width:0!important; min-height:0!important; overflow:hidden!important; }
+        .a4-preview-grid:not(.free-layout) .photo-container { width:100%!important; height:100%!important; min-width:0!important; min-height:0!important; overflow:hidden!important; }
+        .a4-preview-grid:not(.free-layout) .img-wrapper { width:100%!important; height:100%!important; max-width:none!important; max-height:none!important; }
+        .a4-preview-grid:not(.free-layout) .img-wrapper > img { width:100%!important; height:100%!important; max-width:none!important; max-height:none!important; object-fit:fill!important; }
+        .resize-handle {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
+        .resize-handle:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+        #sidebarPhotoSize { display: block; font-size: 11px; color: #00ffcc; font-weight: bold; margin: 2px 0 6px; text-align: center; }
+
+        /* TOOLBAR FIX: PREVENT SHRINKING, KEEP READABLE AT ALL TIMES */
+        .photo-toolbar {
+            display: none !important;
+            background: #0f172a;
+            padding: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            border-top: 2px solid #007bff;
+            z-index: 40;
+            flex-shrink: 0;
+            min-height: 36px;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        #photoActionSidebar {
+            position: fixed;
+            top: 90px;
+            right: 12px;
+            width: 150px;
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+            z-index: 1500;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
+            background: #0f172a;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.35);
+        }
+        #photoActionSidebar.show { display: flex; }
+        .sidebar-title { color: #00ffcc; font-weight: 800; font-size: 13px; text-align: center; padding-bottom: 4px; border-bottom: 1px solid #334155; }
+        .sidebar-photo-name { color: #cbd5e1; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 0 4px; }
+        #photoActionSidebar button { width: 100%; min-height: 32px; padding: 6px 7px; font-size: 11px; background: #fff; color: #0f172a; border: 1px solid #64748b; border-radius: 5px; cursor: pointer; font-weight: 700; }
+        #photoActionSidebar button:hover { background: #e0f2fe; border-color: #007bff; }
+        #photoActionSidebar .sidebar-delete { background: #dc3545; color: #fff; border-color: #dc3545; }
+        #photoActionSidebar .sidebar-close { background: #334155; color: #fff; border-color: #475569; }
+        .photo-card.selected-photo { outline: 3px solid #00a8ff; outline-offset: -3px; box-shadow: 0 0 0 3px rgba(0,168,255,.18) !important; }
+
+        .tool-btn {
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #94a3b8;
+            padding: 3px 6px !important;
+            font-size: 11px !important;
+            font-weight: bold !important;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 26px !important;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .tool-btn:hover {
+            background: #f1f5f9;
+            border-color: #007bff;
+            color: #007bff;
+        }
+        .tool-btn.active-btn {
+            background: #007bff;
+            color: #ffffff;
+            border-color: #0056b3;
+        }
+        .tool-select {
+            background: #007bff;
+            color: #fff;
+            border: 1px solid #0056b3;
+            padding: 2px 4px !important;
+            font-size: 11px !important;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            height: 26px !important;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+        .delete-btn { background: #dc3545; color: white; border: none; }
+        .delete-btn:hover { background: #bd2130; color: white; }
+        
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            user-select: none;
+            display: block;
+            box-sizing: border-box;
+            pointer-events: none;
+            background: transparent !important;
+            image-rendering: -webkit-optimize-contrast;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #printButton { background-color: #28a745; }
+        #downloadButton { background-color: #ff5733; }
+        #downloadCurrentButton { background-color: #e83e8c; }
+        #downloadPdfButton { background-color: #6f42c1; }
+        
+        .a4-preview {
+            width: 210mm;
+            height: 297mm;
+            min-width: 210mm;
+            min-height: 297mm;
+            border: 2px dashed #007bff;
+            background: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            padding: 8mm;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            transform-origin: top center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .a4-preview.mode-bw { filter: grayscale(100%); }
+
+        input[type="number"], select {
+            width: 48px;
+            padding: 3px 5px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        input[type="range"] { width: 75px; }
+
+        .empty-placeholder {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #666;
+            font-size: 15px;
+            font-weight: bold;
+            background: transparent;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .custom-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #cropModal {
+            padding: 0;
+            align-items: stretch;
+            justify-content: stretch;
+            background-color: rgba(0,0,0,0.85);
+        }
+        #cropModalContent {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            padding: 10px;
+            border-radius: 0;
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            background: #0f172a;
+        }
+        #cropEditorViewport {
+            flex: 1;
+            min-height: 0;
+            margin: 6px 0;
+            background: #111827;
+            border: 1px solid #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        #cropImageTarget {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            width: auto;
+            height: auto;
+            display: block;
+        }
+        .modal-content {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            width: 330px;
+            text-align: center;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.5);
+            position: absolute;
+            border: 2px solid #007bff;
+        }
+        .modal-header-drag {
+            padding: 6px;
+            cursor: move;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        #movePageModal {
+            display:none; position:fixed; inset:0; z-index:1800; background:rgba(0,0,0,.55);
+            align-items:center; justify-content:center;
+        }
+        #movePageBox {
+            width:min(360px,92vw); max-height:80vh; overflow:auto; background:#fff;
+            border-radius:10px; padding:14px; box-shadow:0 10px 40px rgba(0,0,0,.35);
+            border:2px solid #007bff; box-sizing:border-box;
+        }
+        #movePageList { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:10px; }
+        #movePageList button { min-height:38px; font-size:12px; }
+        #movePageList button.new-page { background:#20c997; }
+        #movePageList button.current-page { outline:3px solid rgba(0,123,255,.2); }
+
+        #loadingModal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .loading-box {
+            background: #1e293b;
+            padding: 20px 30px;
+            border-radius: 10px;
+            border: 2px solid #007bff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #perspectiveModalContent {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            max-width: 100% !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 12px;
+            background: #0f172a;
+            color: white;
+            border: 2px solid #007bff;
+            position: relative;
+            border-radius: 8px;
+        }
+
+        .persp-container {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            overflow: auto;
+            margin: 8px 0;
+            min-height: 0;
+            cursor: grab;
+        }
+
+        .persp-container:active {
+            cursor: grabbing;
+        }
+
+        .persp-canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            margin: auto;
+            transform-origin: center center;
+        }
+
+        .persp-corner {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .persp-corner::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 3px;
+            background: #ff0055;
+            box-shadow: 0 0 3px #ffffff;
+            border-radius: 2px;
+        }
+        .persp-corner::after {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 20px;
+            background: #ff0055;
+            box-shadow: 0 0 3px #ffffff;
+            border-radius: 2px;
+        }
+
+        .persp-corner.midpoint-handle::before,
+        .persp-corner.midpoint-handle::after {
+            background: #ffcc00;
+        }
+
+        .persp-corner.active-corner::before,
+        .persp-corner.active-corner::after {
+            background: #00ff66 !important;
+            box-shadow: 0 0 8px #00ff66 !important;
+        }
+
+        #perspCanvasOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #perspMagnifier {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 3px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
+            pointer-events: none;
+            z-index: 999;
+            display: none;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .nudge-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #1e293b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+        .nudge-btn {
+            background: #334155;
+            color: #fff;
+            border: 1px solid #475569;
+            width: 34px;
+            height: 32px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            width: 100%;
+            font-weight: bold;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.2s;
+        }
+        .preset-btn:hover { opacity: 0.9; }
+
+        #printAreaContainer { display: none; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printAreaContainer, #printAreaContainer * { visibility: visible; }
+            #printAreaContainer {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .print-page-wrapper {
+                page-break-after: always;
+                break-after: page;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 auto !important;
+                padding: 8mm !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+            .print-page-wrapper .a4-preview-grid {
+                width: 100% !important;
+                height: 100% !important;
+                min-height: 0 !important;
+            }
+            .print-page-wrapper img {
+                object-fit: fill;
+            }
+            .print-page-wrapper {
+                display: flex !important;
+                visibility: visible !important;
+            }
+            .print-page-wrapper > img {
+                display: block !important;
+                visibility: visible !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                max-width: none !important;
+                max-height: none !important;
+                object-fit: fill !important;
+                margin: 0 auto !important;
+            }
+        }
+    
+        /* FINAL PHOTO FRAME FIX: handles are always centered exactly on photo corners. */
+        .img-wrapper { position: relative !important; overflow: visible !important; }
+        .img-wrapper .resize-handle { z-index: 9999 !important; pointer-events: auto !important; }
+        .photo-card { overflow: visible !important; }
+
+    @page { size: A4 portrait; margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-fixed-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <span class="header-title">Multi-Photo Selector Pro Ultimate HD</span>
+                <span id="currentPageLabel" style="font-weight: bold; font-size: 13px; color: #28a745; margin-right: 10px;">Page: 1</span>
+                <span id="totalPages" style="font-weight: bold; font-size: 13px; color: #007bff;">Total Pages: 0</span>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <input type="file" id="photoInput" multiple accept="image/*,.pdf" class="custom-file-input">
+                </div>
+                <div class="control-group" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
+                    <label for="rowsInput" style="color: #0f172a;" title="Rows for current page">Page Rows:</label>
+                    <input type="number" id="rowsInput" min="1" max="10" value="3">
+                </div>
+                <div class="control-group" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
+                    <label for="columnsInput" style="color: #0f172a;" title="Cols for current page">Page Cols:</label>
+                    <input type="number" id="columnsInput" min="1" max="10" value="2">
+                </div>
+                <div class="control-group">
+                    <button id="gridArrangeBtn" title="Grid ON/OFF: current page only">▦ Grid: ON</button>
+                </div>
+                <div class="control-group">
+                    <label for="gapInput">Gap:</label>
+                    <input type="number" id="gapInput" min="0" max="30" value="5">px
+                </div>
+                <div class="control-group">
+                    <label for="borderWidthInput">Border:</label>
+                    <input type="number" id="borderWidthInput" min="0" max="10" value="1">px
+                    <input type="color" id="borderColorInput" value="#cccccc" style="width:24px; height:22px; border:none; cursor:pointer; padding:0;">
+                </div>
+                <div class="control-group">
+                    <label for="resizeSlider">All Zoom: <span id="zoomVal">100</span>%</label>
+                    <input type="range" id="resizeSlider" min="30" max="150" value="100">
+                </div>
+                <div class="control-group">
+                    <button id="rotateAllBtn" title="Rotate All Photos 90°">🔄 Rotate All</button>
+                </div>
+                <div class="control-group" id="pageColorControlsContainer" style="display: flex; gap: 4px; flex-wrap: wrap;"></div>
+                
+                <div class="control-group" style="gap: 5px;">
+                    <button id="prevPage" disabled>Prev</button>
+                    <button id="nextPage" disabled>Next</button>
+                    <button id="printButton" disabled>Print All</button>
+                    <button id="downloadButton" disabled>PNGs</button>
+                    <button id="downloadPdfButton" disabled>PDF</button>
+                    <button id="downloadCurrentButton" disabled>Current</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-scroll-container" id="scrollContainer">
+            <div id="a4Preview" class="a4-preview">
+                <div id="a4PreviewGrid" class="a4-preview-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Container for Printing -->
+    <div id="printAreaContainer"></div>
+
+    <!-- Photo action sidebar: shown only after a photo is clicked -->
+    <aside id="photoActionSidebar" aria-label="Photo actions">
+        <div class="sidebar-title">📷 Photo Tools</div>
+        <div id="sidebarPhotoName" class="sidebar-photo-name"></div>
+        <div id="sidebarPhotoSize"></div>
+        <button data-action="center">🎯 Center</button>
+        <button data-action="rotate">🔄 Rotate</button>
+        <button data-action="straighten">📐 Straighten</button>
+        <button data-action="crop">✂️ Crop</button>
+        <button data-action="stretch">↔️ Stretch</button>
+        <button data-action="size">📏 Size</button>
+        <button data-action="reset" class="sidebar-reset">↩️ Reset Photo</button>
+        <button data-action="light">☀️ Light</button>
+        <button data-action="move">📄 Move Page</button>
+        <button data-action="delete" class="sidebar-delete">❌ Delete</button>
+        <button data-action="close" class="sidebar-close">× Close</button>
+    </aside>
+
+    <div id="movePageModal">
+        <div id="movePageBox">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <strong style="font-size:15px;color:#0f172a;">📄 Move Photo to Page</strong>
+                <button id="movePageClose" style="background:#dc3545;padding:5px 9px;">×</button>
+            </div>
+            <div id="movePageHint" style="font-size:11px;color:#64748b;margin-top:5px;text-align:left;"></div>
+            <div id="movePageList"></div>
+        </div>
+    </div>
+
+    <!-- Loading Modal Indicator -->
+    <div id="loadingModal">
+        <div class="loading-box">
+            <div style="font-size: 28px;">⏳</div>
+            <div id="loadingText">फाइल तैयार हो रही है, कृपया प्रतीक्षा करें...</div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="editModal" class="custom-modal">
+        <div class="modal-content" id="editModalContent">
+            <div class="modal-header-drag" id="editModalHeader">🖐️ Brightness Window (Drag Me)</div>
+            <h4 style="margin: 5px 0;">Adjust HD Light</h4>
+            <p id="modalFileName" style="font-size: 11px; color: #666; margin: 2px 0;"></p>
+            <div style="margin: 15px 0;">
+                <label for="modalBrightnessRange" style="font-weight: bold; font-size: 12px;">Brightness: <span id="modalBrightnessVal">100</span>%</label><br>
+                <input type="range" id="modalBrightnessRange" min="30" max="180" value="100" style="width: 100%; margin-top: 8px;">
+            </div>
+            <span style="font-size: 10px; color: #007bff; display: block; margin-bottom: 10px;">💡 पीछे A4 पेज में लाइव बदलाव देखें</span>
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+                <button id="modalResetBtn" style="background-color: #ffc107; color: #000;">Reset</button>
+                <button id="modalCloseBtn" style="background-color: #28a745;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIZE MODAL: PRESETS + ORIGINAL SIZE (EDITABLE) -->
+    <div id="sizeModal" class="custom-modal">
+        <div class="modal-content" id="sizeModalContent">
+            <div class="modal-header-drag" id="sizeModalHeader">🖐️ Photo Dimensions Editor</div>
+            <h4 style="margin: 5px 0; color: #0f172a;">📏 Print Size</h4>
+            <div id="originalSizeInfo" style="font-size: 11px; font-weight: 700; color: #007bff; margin: 2px 0 6px;">Original Photo Size: --</div>
+            <p id="sizeModalFileName" style="font-size: 11px; color: #666; margin: 2px 0;"></p>
+            
+            <div style="margin: 10px 0; padding: 8px; background: #f8f9fa; border: 1px solid #007bff; border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- OPTION 1: 10 x 7 -->
+                <div>
+                    <button id="preset10x7Btn" class="preset-btn" style="background: #17a2b8; color: white;">
+                        🪪 Aadhaar: 10 x 7 cm
+                    </button>
+                    <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Aadhaar / ID Card)</span>
+                </div>
+
+                <!-- OPTION 2: 15 x 12 -->
+                <div>
+                    <button id="preset15x12Btn" class="preset-btn" style="background: #6f42c1; color: white;">
+                        📘 Bank Passbook: 15 x 12 cm
+                    </button>
+                    <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Bank Passbook)</span>
+                </div>
+
+                <!-- OPTION 3: LANDSCAPE 28 x 19 -->
+                <div>
+                    <button id="preset28x20Btn" class="preset-btn" style="background: #fd7e14; color: white;">
+                        🖼️ Landscape Photo: 28 x 19 cm
+                    </button>
+                    <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Landscape / A4 Full Page)</span>
+                </div>
+            </div>
+
+            <!-- ORIGINAL PHOTO SIZE: editable directly in the same fields -->
+            <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px; text-align: left;">
+                <div style="margin: 6px 0;">
+                    <label style="font-size: 11px; font-weight: bold;">Unit:</label>
+                    <select id="unitSelect" style="width: 100%; padding: 4px; margin-top: 2px;">
+                        <option value="cm">Centimeter (cm)</option>
+                        <option value="inch">Inch</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px; margin: 6px 0;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 11px; font-weight: bold;" id="widthLabel">Width:</label>
+                        <input type="number" id="inputWidthVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 11px; font-weight: bold;" id="heightLabel">Height:</label>
+                        <input type="number" id="inputHeightVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin: 10px 0 6px 0;">
+                <button id="applySizeAllBtn" style="background-color: #007bff; color: white;">📐 Apply This Size to All Photos</button>
+                <button id="autoArrangeSizeBtn" style="background-color: #20c997; color: white;">⚡ Auto Arrange by This Size</button>
+                <button id="restoreOriginalBtn" style="background-color: #fd7e14; color: white;">↺ Restore Original Photo</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 10px;">
+                <button id="sizeModalResetBtn" style="background-color: #ffc107; color: #000;">Auto Fit</button>
+                <button id="sizeModalCloseBtn" style="background-color: #28a745;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CROP MODAL -->
+    <div id="cropModal" class="custom-modal">
+        <div class="modal-content" id="cropModalContent">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 6px 12px; border-radius: 4px; flex-shrink: 0; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
+                <span style="color: #00ffcc; font-weight: bold; font-size: 14px;">✂️ Photoshop Freeform Crop & Pan Tool</span>
+                
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button id="cropDragMoveBtn" class="tool-btn" style="background: #17a2b8; color: white;" title="Click to Move/Pan Photo">🖐️ Move Photo</button>
+                    <button id="cropDragCropBtn" class="tool-btn active-btn" style="background: #007bff; color: white;" title="Click to Draw Crop Box">✂️ Draw Crop Box</button>
+                </div>
+
+                <span style="color: #cbd5e1; font-size: 11px;">💡 ज़ूम करके फोटो को ऊपर-नीचे खिसकाने के लिए 🖐️ Move Photo पर क्लिक करें</span>
+            </div>
+            <div id="cropEditorViewport">
+                <img id="cropImageTarget">
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; flex-shrink: 0;">
+                <button id="cropRestoreBtn" style="background-color: #fd7e14;">↺ Restore Original</button>
+                <div>
+                    <button id="cropCancelBtn" style="background-color: #dc3545;">Cancel</button>
+                    <button id="cropApplyBtn" style="background-color: #28a745; font-weight: bold;">Apply Crop</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL SCREEN PERSPECTIVE FIX MODAL -->
+    <div id="perspectiveModal" class="custom-modal">
+        <div class="modal-content" id="perspectiveModalContent">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px 12px; border-radius: 6px; flex-shrink: 0; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 15px; font-weight: bold; color: #00ffcc;">📐 8-Point Straighten / Stretch</span>
+                
+                <div style="display: flex; align-items: center; gap: 6px; background: #0f172a; padding: 3px 8px; border-radius: 5px; border: 1px solid #334155;">
+                    <span style="font-size: 12px; color: #aaa;">Zoom:</span>
+                    <button id="perspZoomOut" class="tool-btn" title="Zoom Out">🔍 -</button>
+                    <span id="perspZoomLevel" style="font-size: 13px; font-weight: bold; color: #00ffcc; min-width: 42px;">100%</span>
+                    <button id="perspZoomIn" class="tool-btn" title="Zoom In">🔍 +</button>
+                    <button id="perspZoomFit" class="tool-btn" title="Reset Zoom Fit">🔍 Fit</button>
+                </div>
+
+                <span style="font-size: 11px; color: #cbd5e1;">💡 माउस क्लिक करके फोटो को ऊपर-नीचे खिसकाएं (Pan)</span>
+            </div>
+            
+            <div class="persp-container" id="perspContainer">
+                <canvas id="perspMagnifier"></canvas>
+
+                <div class="persp-canvas-wrapper" id="perspWrapper">
+                    <canvas id="perspBaseCanvas"></canvas>
+                    <canvas id="perspCanvasOverlay"></canvas>
+
+                    <div class="persp-corner" id="cornerTL" title="Top Left (TL)"></div>
+                    <div class="persp-corner" id="cornerTR" title="Top Right (TR)"></div>
+                    <div class="persp-corner" id="cornerBR" title="Bottom Right (BR)"></div>
+                    <div class="persp-corner" id="cornerBL" title="Bottom Left (BL)"></div>
+
+                    <div class="persp-corner midpoint-handle" id="cornerTM" title="Top Edge Middle"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerRM" title="Right Edge Middle"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerBM" title="Bottom Edge Middle"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerLM" title="Left Edge Middle"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #0f172a; padding: 4px; flex-shrink: 0;">
+                <button id="perspResetBtn" style="background-color: #ffc107; color: #000; font-size: 13px; font-weight: bold;">↺ Reset Corners</button>
+                
+                <div class="nudge-controls">
+                    <span style="font-size: 11px; color: #aaa; margin-right: 4px;">1px Move:</span>
+                    <button class="nudge-btn" id="nudgeLeft" title="Move Left">←</button>
+                    <button class="nudge-btn" id="nudgeUp" title="Move Up">↑</button>
+                    <button class="nudge-btn" id="nudgeDown" title="Move Down">↓</button>
+                    <button class="nudge-btn" id="nudgeRight" title="Move Right">→</button>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button id="perspCancelBtn" style="background-color: #dc3545; padding: 8px 15px; font-weight: bold;">Cancel</button>
+                    <button id="perspApplyBtn" style="background-color: #28a745; padding: 8px 20px; font-size: 14px; font-weight: bold;">✓ Straighten Photo (OK)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const photoInput = document.getElementById('photoInput');
+        const rowsInput = document.getElementById('rowsInput');
+        const columnsInput = document.getElementById('columnsInput');
+        const gapInput = document.getElementById('gapInput');
+        const borderWidthInput = document.getElementById('borderWidthInput');
+        const borderColorInput = document.getElementById('borderColorInput');
+        const resizeSlider = document.getElementById('resizeSlider');
+        const zoomVal = document.getElementById('zoomVal');
+        const rotateAllBtn = document.getElementById('rotateAllBtn');
+        const gridArrangeBtn = document.getElementById('gridArrangeBtn');
+        const applySizeAllBtn = document.getElementById('applySizeAllBtn');
+        const autoArrangeSizeBtn = document.getElementById('autoArrangeSizeBtn');
+        const photoActionSidebar = document.getElementById('photoActionSidebar');
+        const sidebarPhotoName = document.getElementById('sidebarPhotoName');
+        const sidebarPhotoSize = document.getElementById('sidebarPhotoSize');
+        let selectedPhotoIndex = null;
+        const pageColorControlsContainer = document.getElementById('pageColorControlsContainer');
+
+        const a4Preview = document.getElementById('a4Preview');
+        const a4PreviewGrid = document.getElementById('a4PreviewGrid');
+        const scrollContainer = document.getElementById('scrollContainer');
+        const prevPageButton = document.getElementById('prevPage');
+        const nextPageButton = document.getElementById('nextPage');
+        const printButton = document.getElementById('printButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const downloadCurrentButton = document.getElementById('downloadCurrentButton');
+        const downloadPdfButton = document.getElementById('downloadPdfButton');
+        const totalPagesDisplay = document.getElementById('totalPages');
+        const currentPageLabel = document.getElementById('currentPageLabel');
+        const printAreaContainer = document.getElementById('printAreaContainer');
+        const loadingModal = document.getElementById('loadingModal');
+        const loadingText = document.getElementById('loadingText');
+
+        const editModal = document.getElementById('editModal');
+        const modalFileName = document.getElementById('modalFileName');
+        const modalBrightnessRange = document.getElementById('modalBrightnessRange');
+        const modalBrightnessVal = document.getElementById('modalBrightnessVal');
+        const modalResetBtn = document.getElementById('modalResetBtn');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        let activeEditingIndex = null;
+
+        const sizeModal = document.getElementById('sizeModal');
+        const sizeModalFileName = document.getElementById('sizeModalFileName');
+        const originalSizeInfo = document.getElementById('originalSizeInfo');
+        const unitSelect = document.getElementById('unitSelect');
+        const inputWidthVal = document.getElementById('inputWidthVal');
+        const inputHeightVal = document.getElementById('inputHeightVal');
+        const widthLabel = document.getElementById('widthLabel');
+        const heightLabel = document.getElementById('heightLabel');
+        const sizeModalResetBtn = document.getElementById('sizeModalResetBtn');
+        const sizeModalCloseBtn = document.getElementById('sizeModalCloseBtn');
+        const restoreOriginalBtn = document.getElementById('restoreOriginalBtn');
+        const preset10x7Btn = document.getElementById('preset10x7Btn');
+        const preset15x12Btn = document.getElementById('preset15x12Btn');
+        const preset28x20Btn = document.getElementById('preset28x20Btn');
+
+        const cropModal = document.getElementById('cropModal');
+        const cropImageTarget = document.getElementById('cropImageTarget');
+        const cropCancelBtn = document.getElementById('cropCancelBtn');
+        const cropApplyBtn = document.getElementById('cropApplyBtn');
+        const cropRestoreBtn = document.getElementById('cropRestoreBtn');
+        const cropDragMoveBtn = document.getElementById('cropDragMoveBtn');
+        const cropDragCropBtn = document.getElementById('cropDragCropBtn');
+        let cropperInstance = null;
+
+        const perspectiveModal = document.getElementById('perspectiveModal');
+        const perspContainer = document.getElementById('perspContainer');
+        const perspWrapper = document.getElementById('perspWrapper');
+        const perspBaseCanvas = document.getElementById('perspBaseCanvas');
+        const perspCanvasOverlay = document.getElementById('perspCanvasOverlay');
+        const perspMagnifier = document.getElementById('perspMagnifier');
+        const perspResetBtn = document.getElementById('perspResetBtn');
+        const perspCancelBtn = document.getElementById('perspCancelBtn');
+        const perspApplyBtn = document.getElementById('perspApplyBtn');
+
+        const perspZoomInBtn = document.getElementById('perspZoomIn');
+        const perspZoomOutBtn = document.getElementById('perspZoomOut');
+        const perspZoomFitBtn = document.getElementById('perspZoomFit');
+        const perspZoomLevelLabel = document.getElementById('perspZoomLevel');
+
+        const cornerElements = {
+            TL: document.getElementById('cornerTL'),
+            TM: document.getElementById('cornerTM'),
+            TR: document.getElementById('cornerTR'),
+            RM: document.getElementById('cornerRM'),
+            BR: document.getElementById('cornerBR'),
+            BM: document.getElementById('cornerBM'),
+            BL: document.getElementById('cornerBL'),
+            LM: document.getElementById('cornerLM')
+        };
+        
+        let cornerPoints = { TL: {x:0, y:0}, TR: {x:0, y:0}, BR: {x:0, y:0}, BL: {x:0, y:0} };
+        let perspImageObj = null;
+        let activeCornerKey = 'TL';
+
+        let perspZoom = 1.0;
+        let baseCanvasW = 0;
+        let baseCanvasH = 0;
+
+        let photos = []; 
+        let pageModes = {}; 
+        let pageConfigs = {}; 
+        let currentPage = 1;
+        let currentScale = 1;
+
+        // UNDO / REDO HISTORY STACKS
+        let actionHistory = [];
+        let redoHistory = [];
+        const MAX_HISTORY = 40;
+
+        function showLoading(msg = "फाइल तैयार हो रही है, कृपया प्रतीक्षा करें...") {
+            loadingText.textContent = msg;
+            loadingModal.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingModal.style.display = 'none';
+        }
+
+        function triggerBrowserDownload(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clonePhotoObj(p) {
+            return {
+                file: p.file,
+                name: p.name,
+                rotation: p.rotation,
+                brightness: p.brightness,
+                fitMode: p.fitMode,
+                pullW: p.pullW,
+                pullH: p.pullH,
+                customWidth: p.customWidth,
+                customHeight: p.customHeight,
+                offsetX: p.offsetX,
+                offsetY: p.offsetY,
+                unit: p.unit,
+                page: p.page || 1,
+                freeX: p.freeX || 0,
+                freeY: p.freeY || 0,
+                freeWidth: p.freeWidth || null,
+                freeHeight: p.freeHeight || null,
+                url: p.url,
+                originalUrl: p.originalUrl,
+                originalWidth: p.originalWidth || null,
+                originalHeight: p.originalHeight || null,
+                originalDpiX: p.originalDpiX || null,
+                originalDpiY: p.originalDpiY || null,
+                isBlank: p.isBlank
+            };
+        }
+
+        function saveStateToHistory() {
+            redoHistory = [];
+            const state = {
+                photos: photos.map(clonePhotoObj),
+                pageModes: { ...pageModes },
+                pageConfigs: JSON.parse(JSON.stringify(pageConfigs)),
+                currentPage: currentPage
+            };
+            actionHistory.push(state);
+            if (actionHistory.length > MAX_HISTORY) actionHistory.shift();
+        }
+
+        function undoLastAction() {
+            if (actionHistory.length === 0) return;
+            redoHistory.push({
+                photos: photos.map(clonePhotoObj),
+                pageModes: { ...pageModes },
+                pageConfigs: JSON.parse(JSON.stringify(pageConfigs)),
+                currentPage: currentPage
+            });
+
+            const lastState = actionHistory.pop();
+            photos = lastState.photos;
+            pageModes = lastState.pageModes;
+            pageConfigs = lastState.pageConfigs || {};
+            currentPage = lastState.currentPage || 1;
+            refreshAll();
+        }
+
+        function redoLastAction() {
+            if (redoHistory.length === 0) return;
+            actionHistory.push({
+                photos: photos.map(clonePhotoObj),
+                pageModes: { ...pageModes },
+                pageConfigs: JSON.parse(JSON.stringify(pageConfigs)),
+                currentPage: currentPage
+            });
+
+            const nextState = redoHistory.pop();
+            photos = nextState.photos;
+            pageModes = nextState.pageModes;
+            pageConfigs = nextState.pageConfigs || {};
+            currentPage = nextState.currentPage || 1;
+            refreshAll();
+        }
+
+        function getPageConfig(p) {
+            if (!pageConfigs[p]) {
+                pageConfigs[p] = { rows: 3, cols: 2, gap: 5, free: false };
+            } else {
+                pageConfigs[p].rows = Math.max(1, parseInt(pageConfigs[p].rows) || 3);
+                pageConfigs[p].cols = Math.max(1, parseInt(pageConfigs[p].cols) || 2);
+                pageConfigs[p].gap = Math.max(0, parseInt(pageConfigs[p].gap) || 5);
+                if (typeof pageConfigs[p].free !== 'boolean') pageConfigs[p].free = false;
+            }
+            return pageConfigs[p];
+        }
+
+        function getPagePhotoIndices(pageNum) {
+            const page = parseInt(pageNum) || 1;
+            const indices = [];
+            photos.forEach((p, i) => {
+                if (!p.isBlank && (p.page || 1) === page) indices.push(i);
+            });
+            return indices;
+        }
+
+        function getPagePhotoRange(pageNum) {
+            const indices = getPagePhotoIndices(pageNum);
+            const cfg = getPageConfig(pageNum);
+            return { indices, start: indices.length ? indices[0] : 0, end: indices.length ? indices[indices.length - 1] + 1 : 0, cfg };
+        }
+
+        function getTotalPages() {
+            if (photos.length === 0) return 0;
+            let maxPage = 1;
+            photos.forEach(p => { if (!p.isBlank) maxPage = Math.max(maxPage, p.page || 1); });
+            return maxPage;
+        }
+
+        scrollContainer.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    currentScale = Math.min(currentScale + 0.1, 2.0);
+                } else {
+                    currentScale = Math.max(currentScale - 0.1, 0.4);
+                }
+                a4Preview.style.transform = `scale(${currentScale})`;
+            }
+        }, { passive: false });
+
+        async function renderPdfToPhotos(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const extractedPhotos = [];
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                const imgDataUrl = canvas.toDataURL('image/png');
+
+                extractedPhotos.push({
+                    file: file,
+                    name: `${file.name} (P${i})`,
+                    rotation: 0,
+                    brightness: 100,
+                    fitMode: 'contain',
+                    pullW: null,
+                    pullH: null,
+                    customWidth: null,
+                    customHeight: null,
+                    freeWidth: 10,
+                    freeHeight: 7,
+                    offsetX: 0,
+                    offsetY: 0,
+                    unit: 'cm',
+                    url: imgDataUrl,
+                    originalUrl: imgDataUrl,
+                    originalWidth: canvas.width,
+                    originalHeight: canvas.height
+                });
+            }
+            return extractedPhotos;
+        }
+
+        async function getImageDpi(file) {
+            const DEFAULT_DPI = 300;
+            try {
+                const buffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+                const view = new DataView(buffer);
+
+                if (bytes.length >= 24 && view.getUint32(0) === 0x89504E47) {
+                    let pos = 8;
+                    while (pos + 12 <= bytes.length) {
+                        const len = view.getUint32(pos);
+                        const type = String.fromCharCode(bytes[pos+4], bytes[pos+5], bytes[pos+6], bytes[pos+7]);
+                        if (type === 'pHYs' && len >= 9 && pos + 8 + len <= bytes.length) {
+                            const ppux = view.getUint32(pos + 8);
+                            const ppuy = view.getUint32(pos + 12);
+                            const unit = bytes[pos + 16];
+                            if (unit === 1 && ppux > 0 && ppuy > 0) {
+                                return { x: ppux * 0.0254, y: ppuy * 0.0254 };
+                            }
+                        }
+                        pos += 12 + len;
+                    }
+                }
+
+                if (bytes.length >= 4 && bytes[0] === 0xFF && bytes[1] === 0xD8) {
+                    let pos = 2;
+                    while (pos + 4 <= bytes.length) {
+                        if (bytes[pos] !== 0xFF) { pos++; continue; }
+                        const marker = bytes[pos + 1];
+                        if (marker === 0xD9 || marker === 0xDA) break;
+                        const len = view.getUint16(pos + 2);
+                        if (len < 2 || pos + 2 + len > bytes.length) break;
+                        if (marker === 0xE1 && len >= 10 &&
+                            bytes[pos+4] === 0x45 && bytes[pos+5] === 0x78 &&
+                            bytes[pos+6] === 0x69 && bytes[pos+7] === 0x66) {
+                            const tiff = pos + 10;
+                            const little = view.getUint16(tiff) === 0x4949;
+                            const u16 = (o) => view.getUint16(tiff + o, little);
+                            const u32 = (o) => view.getUint32(tiff + o, little);
+                            if (u16(2) !== 42) break;
+                            const ifd0 = tiff + u32(4);
+                            const count = u16(u32(4));
+                            let xRes = null, yRes = null, unit = 2;
+                            for (let i = 0; i < count; i++) {
+                                const e = ifd0 + 2 + i * 12;
+                                if (e + 12 > bytes.length) break;
+                                const tag = u16(e - tiff);
+                                const type = u16(e - tiff + 2);
+                                const n = u32(e - tiff + 4);
+                                if (type === 5 && n >= 1) {
+                                    const off = u32(e - tiff + 8);
+                                    if (off + 8 <= bytes.length) {
+                                        const num = u32(off);
+                                        const den = u32(off + 4);
+                                        const val = den ? num / den : 0;
+                                        if (tag === 0x011A) xRes = val;
+                                        if (tag === 0x011B) yRes = val;
+                                    }
+                                } else if (tag === 0x0128 && type === 3) {
+                                    unit = view.getUint16(e + 8, little);
+                                }
+                            }
+                            if (xRes > 0 && yRes > 0) {
+                                if (unit === 3) { xRes *= 2.54; yRes *= 2.54; }
+                                return { x: xRes, y: yRes };
+                            }
+                        }
+                        pos += 2 + len;
+                    }
+                }
+            } catch (err) {}
+            return { x: DEFAULT_DPI, y: DEFAULT_DPI };
+        }
+
+        async function processFiles(fileList) {
+            if (!fileList || fileList.length === 0) return;
+            saveStateToHistory();
+            
+            const files = Array.from(fileList).sort((a, b) => 
+                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            const newPhotos = [];
+
+            for (const file of files) {
+                if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                    try {
+                        const pdfPages = await renderPdfToPhotos(file);
+                        newPhotos.push(...pdfPages);
+                    } catch (err) {
+                        alert(`PDF Error: ${file.name}`);
+                    }
+                } else {
+                    await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = async function(e) {
+                            const importedImg = new Image();
+                            const dpi = await getImageDpi(file);
+                            importedImg.onload = function() {
+                            newPhotos.push({
+                                file: file,
+                                name: file.name,
+                                rotation: 0,
+                                brightness: 100,
+                                fitMode: 'contain',
+                                pullW: null,
+                                pullH: null,
+                                customWidth: null,
+                                customHeight: null,
+                                freeWidth: 10,
+                                freeHeight: 7,
+                                offsetX: 0,
+                                offsetY: 0,
+                                unit: 'cm',
+                                url: e.target.result,
+                                originalUrl: e.target.result,
+                                originalWidth: importedImg.naturalWidth || importedImg.width || null,
+                                originalHeight: importedImg.naturalHeight || importedImg.height || null,
+                                originalDpiX: dpi.x,
+                                originalDpiY: dpi.y
+                            });
+                            resolve();
+                            };
+                            importedImg.onerror = resolve;
+                            importedImg.src = e.target.result;
+                        };
+                        reader.onerror = resolve;
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+            
+            try { photoInput.value = ''; } catch(err) {}
+            let targetPage = Math.max(1, currentPage);
+            let usedOnPage = getPagePhotoIndices(targetPage).length;
+            for (const np of newPhotos) {
+                let cfg = getPageConfig(targetPage);
+                if (!cfg.free) {
+                    const capacity = Math.max(1, (cfg.rows || 1) * (cfg.cols || 1));
+                    if (usedOnPage >= capacity) {
+                        targetPage++;
+                        usedOnPage = 0;
+                        getPageConfig(targetPage);
+                    }
+                }
+                np.page = targetPage;
+                np.freeX = 0;
+                np.freeY = 0;
+                usedOnPage++;
+            }
+            photos.push(...newPhotos);
+            refreshAll();
+        }
+
+        photoInput.addEventListener('change', (e) => processFiles(e.target.files));
+
+        a4Preview.addEventListener('dragover', (e) => { e.preventDefault(); a4Preview.style.borderColor = '#28a745'; });
+        a4Preview.addEventListener('dragleave', (e) => { e.preventDefault(); a4Preview.style.borderColor = '#007bff'; });
+        a4Preview.addEventListener('drop', (e) => {
+            e.preventDefault();
+            a4Preview.style.borderColor = '#007bff';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
+            }
+        });
+
+        function nudgeActiveCorner(dx, dy) {
+            if (!activeCornerKey) return;
+            const maxW = perspBaseCanvas.width;
+            const maxH = perspBaseCanvas.height;
+            function clampX(val) { return Math.max(0, Math.min(maxW, val)); }
+            function clampY(val) { return Math.max(0, Math.min(maxH, val)); }
+
+            if (['TL', 'TR', 'BR', 'BL'].includes(activeCornerKey)) {
+                cornerPoints[activeCornerKey].x = clampX(cornerPoints[activeCornerKey].x + dx);
+                cornerPoints[activeCornerKey].y = clampY(cornerPoints[activeCornerKey].y + dy);
+            } else if (activeCornerKey === 'TM') {
+                cornerPoints.TL = { x: clampX(cornerPoints.TL.x + dx), y: clampY(cornerPoints.TL.y + dy) };
+                cornerPoints.TR = { x: clampX(cornerPoints.TR.x + dx), y: clampY(cornerPoints.TR.y + dy) };
+            } else if (activeCornerKey === 'RM') {
+                cornerPoints.TR = { x: clampX(cornerPoints.TR.x + dx), y: clampY(cornerPoints.TR.y + dy) };
+                cornerPoints.BR = { x: clampX(cornerPoints.BR.x + dx), y: clampY(cornerPoints.BR.y + dy) };
+            } else if (activeCornerKey === 'BM') {
+                cornerPoints.BR = { x: clampX(cornerPoints.BR.x + dx), y: clampY(cornerPoints.BR.y + dy) };
+                cornerPoints.BL = { x: clampX(cornerPoints.BL.x + dx), y: clampY(cornerPoints.BL.y + dy) };
+            } else if (activeCornerKey === 'LM') {
+                cornerPoints.BL = { x: clampX(cornerPoints.BL.x + dx), y: clampY(cornerPoints.BL.y + dy) };
+                cornerPoints.TL = { x: clampX(cornerPoints.TL.x + dx), y: clampY(cornerPoints.TL.y + dy) };
+            }
+
+            updateCornerHandlePositions();
+            drawPerspectiveOverlay();
+        }
+
+        document.getElementById('nudgeLeft').onclick = () => nudgeActiveCorner(-1, 0);
+        document.getElementById('nudgeRight').onclick = () => nudgeActiveCorner(1, 0);
+        document.getElementById('nudgeUp').onclick = () => nudgeActiveCorner(0, -1);
+        document.getElementById('nudgeDown').onclick = () => nudgeActiveCorner(0, 1);
+
+        document.addEventListener('keydown', (e) => {
+            if (perspectiveModal.style.display === 'flex' && activeCornerKey) {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    const step = e.shiftKey ? 5 : 1;
+                    if (e.key === 'ArrowLeft')  nudgeActiveCorner(-step, 0);
+                    if (e.key === 'ArrowRight') nudgeActiveCorner(step, 0);
+                    if (e.key === 'ArrowUp')    nudgeActiveCorner(0, -step);
+                    if (e.key === 'ArrowDown')  nudgeActiveCorner(0, step);
+                    return;
+                }
+            }
+
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (activeTag === 'input' && document.activeElement.type === 'number') return;
+
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y' || (e.shiftKey && (e.key === 'z' || e.key === 'Z')))) {
+                e.preventDefault();
+                redoLastAction();
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+                e.preventDefault();
+                undoLastAction();
+                return;
+            }
+        });
+
+        function movePhotoToPage(currentIndex, targetPage) {
+            targetPage = parseInt(targetPage);
+            if (isNaN(targetPage) || targetPage < 1 || !photos[currentIndex] || photos[currentIndex].isBlank) return;
+
+            saveStateToHistory();
+            photos[currentIndex].page = targetPage;
+            refreshAll();
+        }
+
+        function makeDraggable(modalContent, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            handle.onmousedown = dragMouseDown;
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                modalContent.style.top = (modalContent.offsetTop - pos2) + "px";
+                modalContent.style.left = (modalContent.offsetLeft - pos1) + "px";
+            }
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        makeDraggable(document.getElementById('sizeModalContent'), document.getElementById('sizeModalHeader'));
+        makeDraggable(document.getElementById('editModalContent'), document.getElementById('editModalHeader'));
+
+        function rebalanceOverflowFromPage(pageNum) {
+            let page = Math.max(1, parseInt(pageNum) || 1);
+            while (true) {
+                const cfg = getPageConfig(page);
+                if (cfg.free) break;
+
+                const indices = getPagePhotoIndices(page);
+                const capacity = Math.max(1, cfg.rows * cfg.cols);
+                if (indices.length <= capacity) break;
+
+                const overflow = indices.slice(capacity);
+                const nextPage = page + 1;
+                const nextCfg = getPageConfig(nextPage);
+
+                overflow.forEach(idx => {
+                    photos[idx].page = nextPage;
+                    if (!nextCfg.free) {
+                        photos[idx].offsetX = 0;
+                        photos[idx].offsetY = 0;
+                    }
+                });
+
+                page = nextPage;
+            }
+        }
+        rowsInput.addEventListener('input', () => {
+            saveStateToHistory();
+            const page = currentPage;
+            const cfg = getPageConfig(page);
+            if (!cfg.free) {
+                cfg.rows = Math.min(Math.max(parseInt(rowsInput.value) || 1, 1), 10);
+                rebalanceOverflowFromPage(page);
+            }
+            refreshAll();
+        });
+
+        columnsInput.addEventListener('input', () => {
+            saveStateToHistory();
+            const page = currentPage;
+            const cfg = getPageConfig(page);
+            if (!cfg.free) {
+                cfg.cols = Math.min(Math.max(parseInt(columnsInput.value) || 1, 1), 10);
+                rebalanceOverflowFromPage(page);
+            }
+            refreshAll();
+        });
+
+        gapInput.addEventListener('input', () => {
+            const cfg = getPageConfig(currentPage);
+            cfg.gap = parseInt(gapInput.value) || 0;
+            refreshAll();
+        });
+
+        [borderWidthInput, borderColorInput].forEach(element => {
+            element.addEventListener('input', () => refreshAll());
+        });
+
+        resizeSlider.addEventListener('input', () => {
+            zoomVal.textContent = resizeSlider.value;
+            refreshAll();
+        });
+
+        rotateAllBtn.addEventListener('click', () => {
+            saveStateToHistory();
+            photos.forEach(p => { 
+                if (!p.isBlank) p.rotation = (p.rotation + 90) % 360; 
+            });
+            refreshAll();
+        });
+
+        prevPageButton.addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; refreshAll(); }
+        });
+
+        nextPageButton.addEventListener('click', () => { 
+            const total = getTotalPages();
+            if (currentPage < total) { currentPage++; refreshAll(); }
+        });
+
+        async function capturePageAsCanvasSilent(pageIdx, renderScale = 300 / 96) {
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '0px';
+            tempContainer.style.width = '210mm';
+            tempContainer.style.height = '297mm';
+            tempContainer.style.backgroundColor = '#ffffff';
+            tempContainer.style.padding = '8mm'; // 8mm Safe margin for print centering
+            tempContainer.style.boxSizing = 'border-box';
+            tempContainer.style.overflow = 'hidden';
+
+            if (pageModes[pageIdx] === 'bw') tempContainer.classList.add('mode-bw');
+
+            const grid = document.createElement('div');
+            grid.className = 'a4-preview-grid';
+
+            const cfg = getPageConfig(pageIdx);
+            const indices = getPagePhotoIndices(pageIdx);
+            if (cfg.free) {
+                grid.classList.add('free-layout');
+                grid.style.position = 'relative';
+                grid.style.display = 'block';
+            } else {
+                grid.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
+                grid.style.gridTemplateRows = `repeat(${cfg.rows}, 1fr)`;
+                grid.style.gap = `${cfg.gap}px`;
+            }
+
+            indices.forEach((globalIndex) => {
+                const photoObj = photos[globalIndex];
+                if (!photoObj) return;
+                const card = createPhotoCardElement(photoObj, globalIndex, pageIdx, true);
+                grid.appendChild(card);
+            });
+
+            tempContainer.appendChild(grid);
+            document.body.appendChild(tempContainer);
+
+            const printCards = tempContainer.querySelectorAll('.photo-card');
+            printCards.forEach(card => {
+                const idx = card.dataset.index;
+                if (idx !== undefined && photos[idx]) {
+                    const photoObj = photos[idx];
+                    const container = card.querySelector('.photo-container');
+                    const imgWrapper = card.querySelector('.img-wrapper');
+                    const img = card.querySelector('img');
+                    if (container && imgWrapper && img && photoObj.fitMode === 'stretch') {
+                        const cw = container.clientWidth || container.getBoundingClientRect().width;
+                        const ch = container.clientHeight || container.getBoundingClientRect().height;
+                        const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                        const quarterTurn = rot === 90 || rot === 270;
+                        const level = Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0));
+                        const scale = [1, 0.9, 0.8][level];
+
+                        imgWrapper.style.setProperty('width', '100%', 'important');
+                        imgWrapper.style.setProperty('height', '100%', 'important');
+                        imgWrapper.style.setProperty('max-width', 'none', 'important');
+                        imgWrapper.style.setProperty('max-height', 'none', 'important');
+                        imgWrapper.style.setProperty('overflow', 'visible', 'important');
+                        imgWrapper.style.setProperty('position', 'relative', 'important');
+
+                        img.style.setProperty('position', 'absolute', 'important');
+                        img.style.setProperty('left', '50%', 'important');
+                        img.style.setProperty('top', '50%', 'important');
+                        img.style.setProperty('display', 'block', 'important');
+                        img.style.setProperty('box-sizing', 'border-box', 'important');
+                        img.style.setProperty('max-width', 'none', 'important');
+                        img.style.setProperty('max-height', 'none', 'important');
+                        img.style.setProperty('object-fit', 'fill', 'important');
+                        img.style.setProperty('transform-origin', 'center center', 'important');
+
+                        if (cw > 0 && ch > 0) {
+                            if (quarterTurn) {
+                                img.style.setProperty('width', `${ch}px`, 'important');
+                                img.style.setProperty('height', `${cw}px`, 'important');
+                            } else {
+                                img.style.setProperty('width', `${cw}px`, 'important');
+                                img.style.setProperty('height', `${ch}px`, 'important');
+                            }
+                        }
+                        img.style.setProperty('transform', `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`, 'important');
+                    }
+                }
+            });
+
+            const images = tempContainer.querySelectorAll('img');
+            const loadPromises = Array.from(images).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            });
+            await Promise.all(loadPromises);
+
+            try {
+                const canvas = await html2canvas(tempContainer, { 
+                    scale: renderScale, 
+                    backgroundColor: '#ffffff', 
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false 
+                });
+                
+                if (pageModes[pageIdx] === 'bw') {
+                    const ctx = canvas.getContext('2d');
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const d = imgData.data;
+                    for (let i = 0; i < d.length; i += 4) {
+                        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        d[i]     = gray;
+                        d[i + 1] = gray;
+                        d[i + 2] = gray;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                }
+
+                document.body.removeChild(tempContainer);
+                return canvas;
+            } catch (err) {
+                if (tempContainer.parentNode) document.body.removeChild(tempContainer);
+                throw err;
+            }
+        }
+
+        downloadCurrentButton.addEventListener('click', async () => {
+            try {
+                showLoading(`पेज ${currentPage} डाउनलोड हो रहा है...`);
+                setTimeout(async () => {
+                    const canvas = await capturePageAsCanvasSilent(currentPage);
+                    triggerBrowserDownload(canvas.toDataURL('image/png'), `page-${currentPage}.png`);
+                    hideLoading();
+                }, 100);
+            } catch(e) {
+                hideLoading();
+                alert("डाउनलोड त्रुटि: " + e.message);
+            }
+        });
+
+        printButton.addEventListener('click', async () => {
+            try {
+                showLoading('प्रिन्ट पेज तैयार हो रहे हैं...');
+                printAreaContainer.innerHTML = '';
+                const totalPages = getTotalPages();
+
+                for (let p = 1; p <= totalPages; p++) {
+                    const canvas = await capturePageAsCanvasSilent(p, 2);
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'print-page-wrapper';
+                    wrapper.style.width = '210mm';
+                    wrapper.style.height = '297mm';
+                    wrapper.style.margin = '0 auto';
+                    wrapper.style.padding = '8mm';
+                    wrapper.style.boxSizing = 'border-box';
+                    wrapper.style.overflow = 'hidden';
+                    wrapper.style.background = '#fff';
+                    wrapper.style.position = 'relative';
+                    wrapper.style.pageBreakAfter = p < totalPages ? 'always' : 'auto';
+                    wrapper.style.breakAfter = p < totalPages ? 'page' : 'auto';
+
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.alt = `Print Page ${p}`;
+                    img.style.display = 'block';
+                    img.style.width = '210mm';
+                    img.style.height = '297mm';
+                    img.style.maxWidth = 'none';
+                    img.style.maxHeight = 'none';
+                    img.style.objectFit = 'fill';
+                    img.style.margin = '0 auto';
+                    wrapper.appendChild(img);
+                    printAreaContainer.appendChild(wrapper);
+                }
+
+                hideLoading();
+                const printImages = Array.from(printAreaContainer.querySelectorAll('img'));
+                await Promise.all(printImages.map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    });
+                }));
+                requestAnimationFrame(() => setTimeout(() => window.print(), 50));
+            } catch(e) {
+                hideLoading();
+                alert('प्रिन्ट त्रुटि: ' + e.message);
+            }
+        });
+
+        downloadButton.addEventListener('click', async () => {
+            try {
+                showLoading("सभी PNGs डाउनलोड हो रही हैं...");
+                const totalPages = getTotalPages();
+
+                for (let p = 1; p <= totalPages; p++) {
+                    const canvas = await capturePageAsCanvasSilent(p);
+                    triggerBrowserDownload(canvas.toDataURL('image/png'), `page-${p}.png`);
+                }
+                hideLoading();
+            } catch(e) {
+                hideLoading();
+                alert("डाउनलोड त्रुटि: " + e.message);
+            }
+        });
+
+        downloadPdfButton.addEventListener('click', async () => {
+            try {
+                showLoading("PDF तैयार हो रही है...");
+                setTimeout(async () => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const totalPages = getTotalPages();
+
+                    for (let p = 1; p <= totalPages; p++) {
+                        const canvas = await capturePageAsCanvasSilent(p);
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        if (p > 1) pdf.addPage();
+                        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                    }
+
+                    pdf.save('photos-output.pdf');
+                    hideLoading();
+                }, 100);
+            } catch(e) {
+                hideLoading();
+                alert("PDF त्रुटि: " + e.message);
+            }
+        });
+
+        modalBrightnessRange.addEventListener('input', () => {
+            const val = modalBrightnessRange.value;
+            modalBrightnessVal.textContent = val;
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                photos[activeEditingIndex].brightness = parseInt(val);
+                
+                const cardImg = document.querySelector(`.photo-card[data-index="${activeEditingIndex}"] img`);
+                if (cardImg) {
+                    let filterVal = `brightness(${val}%)`;
+                    if (pageModes[currentPage] === 'bw') filterVal += ` grayscale(100%)`;
+                    cardImg.style.filter = filterVal;
+                }
+            }
+        });
+
+        modalResetBtn.addEventListener('click', () => {
+            saveStateToHistory();
+            modalBrightnessRange.value = 100;
+            modalBrightnessVal.textContent = 100;
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                photos[activeEditingIndex].brightness = 100;
+                refreshAll();
+            }
+        });
+
+        modalCloseBtn.addEventListener('click', () => {
+            editModal.style.display = 'none';
+            activeEditingIndex = null;
+            refreshAll();
+        });
+
+        function resetPhotoToInitialState(index) {
+            if (index === null || index === undefined || !photos[index]) return;
+            saveStateToHistory();
+            const photo = photos[index];
+            photo.url = photo.originalUrl;
+            photo.rotation = 0;
+            photo.brightness = 100;
+            photo.fitMode = 'contain';
+            photo.stretchLevel = 0;
+            photo.pullW = null;
+            photo.pullH = null;
+            photo.customWidth = null;
+            photo.customHeight = null;
+            photo.offsetX = 0;
+            photo.offsetY = 0;
+            photo.freeX = 0;
+            photo.freeY = 0;
+            photo.freeWidth = null;
+            photo.freeHeight = null;
+            refreshAll();
+        }
+
+        restoreOriginalBtn.addEventListener('click', () => {
+            resetPhotoToInitialState(activeEditingIndex);
+        });
+
+        preset10x7Btn.addEventListener('click', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                photos[activeEditingIndex].fitMode = 'custom';
+                photos[activeEditingIndex].unit = 'cm';
+                photos[activeEditingIndex].customWidth = 10;
+                photos[activeEditingIndex].customHeight = 7;
+                photos[activeEditingIndex].freeWidth = 10;
+                photos[activeEditingIndex].freeHeight = 7;
+
+                unitSelect.value = 'cm';
+                inputWidthVal.value = 10;
+                inputHeightVal.value = 7;
+                widthLabel.textContent = `Width (cm):`;
+                heightLabel.textContent = `Height (cm):`;
+
+                refreshAll();
+            }
+        });
+
+        preset15x12Btn.addEventListener('click', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                photos[activeEditingIndex].fitMode = 'custom';
+                photos[activeEditingIndex].unit = 'cm';
+                photos[activeEditingIndex].customWidth = 15;
+                photos[activeEditingIndex].customHeight = 12;
+                photos[activeEditingIndex].freeWidth = 15;
+                photos[activeEditingIndex].freeHeight = 12;
+
+                unitSelect.value = 'cm';
+                inputWidthVal.value = 15;
+                inputHeightVal.value = 12;
+                widthLabel.textContent = `Width (cm):`;
+                heightLabel.textContent = `Height (cm):`;
+
+                refreshAll();
+            }
+        });
+
+        preset28x20Btn.addEventListener('click', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                photos[activeEditingIndex].fitMode = 'custom';
+                photos[activeEditingIndex].unit = 'cm';
+                photos[activeEditingIndex].customWidth = 28;
+                photos[activeEditingIndex].customHeight = 19;
+                photos[activeEditingIndex].freeWidth = 28;
+                photos[activeEditingIndex].freeHeight = 19;
+
+                unitSelect.value = 'cm';
+                inputWidthVal.value = 28;
+                inputHeightVal.value = 19;
+                widthLabel.textContent = `Width (cm):`;
+                heightLabel.textContent = `Height (cm):`;
+
+                refreshAll();
+            }
+        });
+
+        function getReferencePrintSize(photo, unit) {
+            if (!photo) return { width: 0, height: 0 };
+            const dpiX = Number(photo.originalDpiX) > 0 ? Number(photo.originalDpiX) : 300;
+            const dpiY = Number(photo.originalDpiY) > 0 ? Number(photo.originalDpiY) : 300;
+            const pxToUnitX = unit === 'inch' ? dpiX : dpiX / 2.54;
+            const pxToUnitY = unit === 'inch' ? dpiY : dpiY / 2.54;
+            return {
+                width: Number(photo.originalWidth) > 0 ? Number(photo.originalWidth) / pxToUnitX : 5,
+                height: Number(photo.originalHeight) > 0 ? Number(photo.originalHeight) / pxToUnitY : 7
+            };
+        }
+
+        unitSelect.addEventListener('change', () => {
+            const u = unitSelect.value;
+            widthLabel.textContent = `Width (${u === 'inch' ? 'in' : 'cm'}):`;
+            heightLabel.textContent = `Height (${u === 'inch' ? 'in' : 'cm'}):`;
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                const photo = photos[activeEditingIndex];
+                const oldUnit = photo.unit || 'cm';
+                if (photo.customWidth > 0 && photo.customHeight > 0 && oldUnit !== u) {
+                    saveStateToHistory();
+                    if (u === 'inch' && oldUnit === 'cm') {
+                        photo.customWidth /= 2.54; photo.customHeight /= 2.54;
+                    } else if (u === 'cm' && oldUnit === 'inch') {
+                        photo.customWidth *= 2.54; photo.customHeight *= 2.54;
+                    }
+                    inputWidthVal.value = Number(photo.customWidth.toFixed(2));
+                    inputHeightVal.value = Number(photo.customHeight.toFixed(2));
+                    photo.fitMode = 'custom';
+                    photo.unit = u;
+                } else if (!(photo.customWidth > 0 && photo.customHeight > 0)) {
+                    const ref = getReferencePrintSize(photo, u);
+                    inputWidthVal.value = Number(ref.width.toFixed(2));
+                    inputHeightVal.value = Number(ref.height.toFixed(2));
+                }
+                const ref = getReferencePrintSize(photo, u);
+                if (originalSizeInfo) {
+                    originalSizeInfo.textContent = `Original Size: ${ref.width.toFixed(2)} × ${ref.height.toFixed(2)} ${u === 'inch' ? 'in' : 'cm'} (${photo.originalWidth || 0} × ${photo.originalHeight || 0} px)`;
+                }
+                refreshAll();
+            }
+        });
+
+        inputWidthVal.addEventListener('input', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                photos[activeEditingIndex].fitMode = 'custom';
+                photos[activeEditingIndex].customWidth = parseFloat(inputWidthVal.value) || null;
+                photos[activeEditingIndex].freeWidth = photos[activeEditingIndex].customWidth;
+                photos[activeEditingIndex].unit = unitSelect.value;
+                refreshAll();
+            }
+        });
+
+        inputHeightVal.addEventListener('input', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                photos[activeEditingIndex].fitMode = 'custom';
+                photos[activeEditingIndex].customHeight = parseFloat(inputHeightVal.value) || null;
+                photos[activeEditingIndex].freeHeight = photos[activeEditingIndex].customHeight;
+                photos[activeEditingIndex].unit = unitSelect.value;
+                refreshAll();
+            }
+        });
+
+        sizeModalResetBtn.addEventListener('click', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                photos[activeEditingIndex].fitMode = 'contain';
+                photos[activeEditingIndex].customWidth = null;
+                photos[activeEditingIndex].customHeight = null;
+                photos[activeEditingIndex].freeWidth = null;
+                photos[activeEditingIndex].freeHeight = null;
+                photos[activeEditingIndex].pullW = null;
+                photos[activeEditingIndex].pullH = null;
+                photos[activeEditingIndex].offsetX = 0;
+                photos[activeEditingIndex].offsetY = 0;
+                photos[activeEditingIndex].unit = 'cm';
+                unitSelect.value = 'cm';
+                inputWidthVal.value = 5;
+                inputHeightVal.value = 5;
+                refreshAll();
+            }
+        });
+
+        sizeModalCloseBtn.addEventListener('click', () => {
+            sizeModal.style.display = 'none';
+            activeEditingIndex = null;
+        });
+
+        cropDragMoveBtn.addEventListener('click', () => {
+            if (cropperInstance) {
+                cropperInstance.setDragMode('move');
+                cropDragMoveBtn.classList.add('active-btn');
+                cropDragCropBtn.classList.remove('active-btn');
+            }
+        });
+
+        cropDragCropBtn.addEventListener('click', () => {
+            if (cropperInstance) {
+                cropperInstance.setDragMode('crop');
+                cropDragCropBtn.classList.add('active-btn');
+                cropDragMoveBtn.classList.remove('active-btn');
+            }
+        });
+
+        cropCancelBtn.addEventListener('click', () => {
+            if (cropperInstance) cropperInstance.destroy();
+            cropModal.style.display = 'none';
+            activeEditingIndex = null;
+        });
+
+        cropRestoreBtn.addEventListener('click', () => {
+            if (activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                photos[activeEditingIndex].url = photos[activeEditingIndex].originalUrl;
+                photos[activeEditingIndex].rotation = 0;
+                photos[activeEditingIndex].pullW = null;
+                photos[activeEditingIndex].pullH = null;
+                photos[activeEditingIndex].offsetX = 0;
+                photos[activeEditingIndex].offsetY = 0;
+                photos[activeEditingIndex].fitMode = 'contain';
+                if (cropperInstance) cropperInstance.destroy();
+                cropModal.style.display = 'none';
+                activeEditingIndex = null;
+                refreshAll();
+            }
+        });
+
+        cropApplyBtn.addEventListener('click', () => {
+            if (cropperInstance && activeEditingIndex !== null && photos[activeEditingIndex]) {
+                saveStateToHistory();
+                const canvas = cropperInstance.getCroppedCanvas();
+                if (canvas) {
+                    photos[activeEditingIndex].url = canvas.toDataURL();
+                    photos[activeEditingIndex].rotation = 0;
+                    photos[activeEditingIndex].pullW = null;
+                    photos[activeEditingIndex].pullH = null;
+                    if (!(photos[activeEditingIndex].customWidth > 0 && photos[activeEditingIndex].customHeight > 0)) photos[activeEditingIndex].fitMode = 'contain';
+                }
+                
+                cropperInstance.destroy();
+                cropModal.style.display = 'none';
+                activeEditingIndex = null;
+                refreshAll();
+            }
+        });
+
+        function getMidpoints() {
+            return {
+                TM: { x: Math.round((cornerPoints.TL.x + cornerPoints.TR.x) / 2), y: Math.round((cornerPoints.TL.y + cornerPoints.TR.y) / 2) },
+                RM: { x: Math.round((cornerPoints.TR.x + cornerPoints.BR.x) / 2), y: Math.round((cornerPoints.TR.y + cornerPoints.BR.y) / 2) },
+                BM: { x: Math.round((cornerPoints.BR.x + cornerPoints.BL.x) / 2), y: Math.round((cornerPoints.BR.y + cornerPoints.BL.y) / 2) },
+                LM: { x: Math.round((cornerPoints.BL.x + cornerPoints.TL.x) / 2), y: Math.round((cornerPoints.BL.y + cornerPoints.TL.y) / 2) }
+            };
+        }
+
+        function initPerspectiveModal(photoObj) {
+            perspImageObj = new Image();
+            perspImageObj.crossOrigin = "anonymous";
+            perspImageObj.onload = () => {
+                perspectiveModal.style.display = 'flex';
+                perspZoom = 1.0;
+
+                setTimeout(() => {
+                    resizePerspectiveCanvas();
+                    activeCornerKey = 'TL';
+                    updateCornerHandlePositions();
+                    drawPerspectiveOverlay();
+                }, 50);
+            };
+            perspImageObj.src = photoObj.url;
+        }
+
+        function resizePerspectiveCanvas() {
+            if (!perspImageObj) return;
+            const containerW = perspContainer.clientWidth - 20;
+            const containerH = perspContainer.clientHeight - 20;
+
+            let w = perspImageObj.width;
+            let h = perspImageObj.height;
+
+            let scale = Math.min(containerW / w, containerH / h, 1);
+            baseCanvasW = Math.round(w * scale);
+            baseCanvasH = Math.round(h * scale);
+
+            perspBaseCanvas.width = baseCanvasW;
+            perspBaseCanvas.height = baseCanvasH;
+
+            cornerPoints = {
+                TL: { x: 0, y: 0 },
+                TR: { x: baseCanvasW, y: 0 },
+                BR: { x: baseCanvasW, y: baseCanvasH },
+                BL: { x: 0, y: baseCanvasH }
+            };
+
+            applyPerspZoom();
+        }
+
+        function applyPerspZoom() {
+            const displayW = Math.round(baseCanvasW * perspZoom);
+            const displayH = Math.round(baseCanvasH * perspZoom);
+
+            perspBaseCanvas.style.width = displayW + 'px';
+            perspBaseCanvas.style.height = displayH + 'px';
+
+            perspCanvasOverlay.width = displayW;
+            perspCanvasOverlay.height = displayH;
+            perspCanvasOverlay.style.width = displayW + 'px';
+            perspCanvasOverlay.style.height = displayH + 'px';
+
+            perspWrapper.style.width = displayW + 'px';
+            perspWrapper.style.height = displayH + 'px';
+
+            const ctx = perspBaseCanvas.getContext('2d');
+            ctx.clearRect(0, 0, baseCanvasW, baseCanvasH);
+            ctx.drawImage(perspImageObj, 0, 0, baseCanvasW, baseCanvasH);
+
+            perspZoomLevelLabel.textContent = Math.round(perspZoom * 100) + '%';
+            updateCornerHandlePositions();
+            drawPerspectiveOverlay();
+        }
+
+        perspZoomInBtn.onclick = () => { perspZoom = Math.min(perspZoom + 0.5, 15.0); applyPerspZoom(); };
+        perspZoomOutBtn.onclick = () => { perspZoom = Math.max(perspZoom - 0.5, 0.5); applyPerspZoom(); };
+        perspZoomFitBtn.onclick = () => { perspZoom = 1.0; applyPerspZoom(); };
+
+        let isPanningPersp = false;
+        let panStartX = 0, panStartY = 0;
+        let scrollStartX = 0, scrollStartY = 0;
+
+        perspContainer.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('persp-corner')) return;
+            isPanningPersp = true;
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            scrollStartX = perspContainer.scrollLeft;
+            scrollStartY = perspContainer.scrollTop;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanningPersp) return;
+            const dx = e.clientX - panStartX;
+            const dy = e.clientY - panStartY;
+            perspContainer.scrollLeft = scrollStartX - dx;
+            perspContainer.scrollTop = scrollStartY - dy;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isPanningPersp = false;
+        });
+
+        perspContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = perspContainer.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const oldZoom = perspZoom;
+            const scrollLeft = perspContainer.scrollLeft;
+            const scrollTop = perspContainer.scrollTop;
+
+            const targetX = (scrollLeft + mouseX) / oldZoom;
+            const targetY = (scrollTop + mouseY) / oldZoom;
+
+            let zoomFactor = e.deltaY < 0 ? 1.25 : 0.8;
+            let newZoom = Math.max(0.5, Math.min(15.0, oldZoom * zoomFactor));
+
+            if (newZoom !== oldZoom) {
+                perspZoom = newZoom;
+                applyPerspZoom();
+                perspContainer.scrollLeft = (targetX * newZoom) - mouseX;
+                perspContainer.scrollTop = (targetY * newZoom) - mouseY;
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', () => {
+            if (perspectiveModal.style.display === 'flex' && perspImageObj) resizePerspectiveCanvas();
+        });
+
+        function updateCornerHandlePositions() {
+            const mids = getMidpoints();
+            const allPts = { ...cornerPoints, ...mids };
+
+            for (let key in allPts) {
+                if (cornerElements[key]) {
+                    cornerElements[key].style.left = (allPts[key].x * perspZoom) + 'px';
+                    cornerElements[key].style.top = (allPts[key].y * perspZoom) + 'px';
+                    if (key === activeCornerKey) {
+                        cornerElements[key].classList.add('active-corner');
+                    } else {
+                        cornerElements[key].classList.remove('active-corner');
+                    }
+                }
+            }
+        }
+
+        function drawPerspectiveOverlay() {
+            const ctx = perspCanvasOverlay.getContext('2d');
+            const w = perspCanvasOverlay.width;
+            const h = perspCanvasOverlay.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const scalePts = {
+                TL: { x: cornerPoints.TL.x * perspZoom, y: cornerPoints.TL.y * perspZoom },
+                TR: { x: cornerPoints.TR.x * perspZoom, y: cornerPoints.TR.y * perspZoom },
+                BR: { x: cornerPoints.BR.x * perspZoom, y: cornerPoints.BR.y * perspZoom },
+                BL: { x: cornerPoints.BL.x * perspZoom, y: cornerPoints.BL.y * perspZoom }
+            };
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.rect(0, 0, w, h);
+            ctx.moveTo(scalePts.TL.x, scalePts.TL.y);
+            ctx.lineTo(scalePts.BL.x, scalePts.BL.y);
+            ctx.lineTo(scalePts.BR.x, scalePts.BR.y);
+            ctx.lineTo(scalePts.TR.x, scalePts.TR.y);
+            ctx.closePath();
+            ctx.fill('evenodd');
+
+            ctx.strokeStyle = '#00ff66';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(scalePts.TL.x, scalePts.TL.y);
+            ctx.lineTo(scalePts.TR.x, scalePts.TR.y);
+            ctx.lineTo(scalePts.BR.x, scalePts.BR.y);
+            ctx.lineTo(scalePts.BL.x, scalePts.BL.y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        function updateMagnifier(x, y) {
+            perspMagnifier.style.display = 'block';
+            perspMagnifier.width = 140;
+            perspMagnifier.height = 140;
+            const mCtx = perspMagnifier.getContext('2d');
+            
+            mCtx.fillStyle = '#000';
+            mCtx.fillRect(0, 0, 140, 140);
+
+            const zoomScale = 2.5;
+            const srcSize = 140 / zoomScale;
+
+            mCtx.drawImage(
+                perspBaseCanvas,
+                x - srcSize / 2, y - srcSize / 2, srcSize, srcSize,
+                0, 0, 140, 140
+            );
+
+            mCtx.strokeStyle = '#ff0055';
+            mCtx.lineWidth = 2;
+            mCtx.beginPath();
+            mCtx.moveTo(70, 0); mCtx.lineTo(70, 140);
+            mCtx.moveTo(0, 70); mCtx.lineTo(140, 70);
+            mCtx.stroke();
+        }
+
+        function hideMagnifier() { perspMagnifier.style.display = 'none'; }
+
+        Object.keys(cornerElements).forEach(key => {
+            const el = cornerElements[key];
+            let isDragging = false;
+            let startMouse = { x: 0, y: 0 };
+            let startCorners = {};
+
+            const onStart = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                activeCornerKey = key;
+                isDragging = true;
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startMouse = { x: clientX, y: clientY };
+                startCorners = JSON.parse(JSON.stringify(cornerPoints));
+
+                updateCornerHandlePositions();
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onEnd);
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend', onEnd);
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                const rect = perspWrapper.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                const dx = (clientX - startMouse.x) / perspZoom;
+                const dy = (clientY - startMouse.y) / perspZoom;
+
+                const maxW = baseCanvasW;
+                const maxH = baseCanvasH;
+                function clampX(val) { return Math.max(0, Math.min(maxW, val)); }
+                function clampY(val) { return Math.max(0, Math.min(maxH, val)); }
+
+                if (['TL', 'TR', 'BR', 'BL'].includes(key)) {
+                    let x = (clientX - rect.left) / perspZoom;
+                    let y = (clientY - rect.top) / perspZoom;
+                    cornerPoints[key] = { x: clampX(x), y: clampY(y) };
+                    updateMagnifier(cornerPoints[key].x, cornerPoints[key].y);
+                } else if (key === 'TM') {
+                    cornerPoints.TL = { x: clampX(startCorners.TL.x + dx), y: clampY(startCorners.TL.y + dy) };
+                    cornerPoints.TR = { x: clampX(startCorners.TR.x + dx), y: clampY(startCorners.TR.y + dy) };
+                } else if (key === 'RM') {
+                    cornerPoints.TR = { x: clampX(startCorners.TR.x + dx), y: clampY(startCorners.TR.y + dy) };
+                    cornerPoints.BR = { x: clampX(startCorners.BR.x + dx), y: clampY(startCorners.BR.y + dy) };
+                } else if (key === 'BM') {
+                    cornerPoints.BR = { x: clampX(startCorners.BR.x + dx), y: clampY(startCorners.BR.y + dy) };
+                    cornerPoints.BL = { x: clampX(startCorners.BL.x + dx), y: clampY(startCorners.BL.y + dy) };
+                } else if (key === 'LM') {
+                    cornerPoints.BL = { x: clampX(startCorners.BL.x + dx), y: clampY(startCorners.BL.y + dy) };
+                    cornerPoints.TL = { x: clampX(startCorners.TL.x + dx), y: clampY(startCorners.TL.y + dy) };
+                }
+
+                updateCornerHandlePositions();
+                drawPerspectiveOverlay();
+            };
+
+            const onEnd = () => {
+                isDragging = false;
+                hideMagnifier();
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onEnd);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
+            };
+
+            el.addEventListener('mousedown', onStart);
+            el.addEventListener('touchstart', onStart, { passive: false });
+        });
+
+        perspResetBtn.addEventListener('click', () => {
+            cornerPoints = {
+                TL: { x: 0, y: 0 },
+                TR: { x: baseCanvasW, y: 0 },
+                BR: { x: baseCanvasW, y: baseCanvasH },
+                BL: { x: 0, y: baseCanvasH }
+            };
+            activeCornerKey = 'TL';
+            updateCornerHandlePositions();
+            drawPerspectiveOverlay();
+        });
+
+        perspCancelBtn.addEventListener('click', () => {
+            perspectiveModal.style.display = 'none';
+            activeEditingIndex = null;
+        });
+
+        perspApplyBtn.addEventListener('click', () => {
+            if (activeEditingIndex === null || !photos[activeEditingIndex]) return;
+            saveStateToHistory();
+
+            const scaleX = perspImageObj.width / baseCanvasW;
+            const scaleY = perspImageObj.height / baseCanvasH;
+
+            const srcQuad = [
+                { x: cornerPoints.TL.x * scaleX, y: cornerPoints.TL.y * scaleY },
+                { x: cornerPoints.TR.x * scaleX, y: cornerPoints.TR.y * scaleY },
+                { x: cornerPoints.BR.x * scaleX, y: cornerPoints.BR.y * scaleY },
+                { x: cornerPoints.BL.x * scaleX, y: cornerPoints.BL.y * scaleY }
+            ];
+
+            const topW = Math.hypot(srcQuad[1].x - srcQuad[0].x, srcQuad[1].y - srcQuad[0].y);
+            const botW = Math.hypot(srcQuad[2].x - srcQuad[3].x, srcQuad[2].y - srcQuad[3].y);
+            const leftH = Math.hypot(srcQuad[3].x - srcQuad[0].x, srcQuad[3].y - srcQuad[0].y);
+            const rightH = Math.hypot(srcQuad[2].x - srcQuad[1].x, srcQuad[2].y - srcQuad[1].y);
+
+            const outW = Math.max(100, Math.round((topW + botW) / 2));
+            const outH = Math.max(100, Math.round((leftH + rightH) / 2));
+
+            const outCanvas = document.createElement('canvas');
+            outCanvas.width = outW;
+            outCanvas.height = outH;
+
+            warpPerspectiveHomography(perspImageObj, srcQuad, outCanvas);
+
+            photos[activeEditingIndex].url = outCanvas.toDataURL('image/png');
+            photos[activeEditingIndex].rotation = 0;
+            photos[activeEditingIndex].pullW = null;
+            photos[activeEditingIndex].pullH = null;
+            if (!(photos[activeEditingIndex].customWidth > 0 && photos[activeEditingIndex].customHeight > 0)) photos[activeEditingIndex].fitMode = 'contain';
+
+            perspectiveModal.style.display = 'none';
+            activeEditingIndex = null;
+            refreshAll();
+        });
+
+        function warpPerspectiveHomography(imgObj, srcQuad, outCanvas) {
+            const outW = outCanvas.width;
+            const outH = outCanvas.height;
+            const ctx = outCanvas.getContext('2d');
+
+            const srcCanvas = document.createElement('canvas');
+            srcCanvas.width = imgObj.width;
+            srcCanvas.height = imgObj.height;
+            const srcCtx = srcCanvas.getContext('2d');
+            srcCtx.drawImage(imgObj, 0, 0);
+
+            const srcImgData = srcCtx.getImageData(0, 0, imgObj.width, imgObj.height);
+            const srcPixels = srcImgData.data;
+            const srcW = imgObj.width;
+            const srcH = imgObj.height;
+
+            const dstPts = [
+                { x: 0, y: 0 },
+                { x: outW, y: 0 },
+                { x: outW, y: outH },
+                { x: 0, y: outH }
+            ];
+
+            const H = solveHomography(srcQuad, dstPts);
+            if (!H) return;
+
+            const outImgData = ctx.createImageData(outW, outH);
+            const outPixels = outImgData.data;
+
+            const h00 = H[0], h01 = H[1], h02 = H[2];
+            const h10 = H[3], h11 = H[4], h12 = H[5];
+            const h20 = H[6], h21 = H[7], h22 = H[8];
+
+            for (let y = 0; y < outH; y++) {
+                for (let x = 0; x < outW; x++) {
+                    let denom = h20 * x + h21 * y + h22;
+                    if (Math.abs(denom) < 0.00001) continue;
+
+                    let sx = (h00 * x + h01 * y + h02) / denom;
+                    let sy = (h10 * x + h11 * y + h12) / denom;
+
+                    if (sx >= 0 && sx < srcW - 1 && sy >= 0 && sy < srcH - 1) {
+                        let x0 = Math.floor(sx);
+                        let y0 = Math.floor(sy);
+                        let x1 = x0 + 1;
+                        let y1 = y0 + 1;
+
+                        let dx = sx - x0;
+                        let dy = sy - y0;
+
+                        let idx00 = (y0 * srcW + x0) * 4;
+                        let idx10 = (y0 * srcW + x1) * 4;
+                        let idx01 = (y1 * srcW + x0) * 4;
+                        let idx11 = (y1 * srcW + x1) * 4;
+
+                        let dstIdx = (y * outW + x) * 4;
+
+                        for (let c = 0; c < 4; c++) {
+                            let top = srcPixels[idx00 + c] * (1 - dx) + srcPixels[idx10 + c] * dx;
+                            let bottom = srcPixels[idx01 + c] * (1 - dx) + srcPixels[idx11 + c] * dx;
+                            outPixels[dstIdx + c] = Math.round(top * (1 - dy) + bottom * dy);
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(outImgData, 0, 0);
+        }
+
+        function solveHomography(srcPts, dstPts) {
+            let A = [];
+            let B = [];
+
+            for (let i = 0; i < 4; i++) {
+                let u = dstPts[i].x, v = dstPts[i].y;
+                let x = srcPts[i].x, y = srcPts[i].y;
+
+                A.push([u, v, 1, 0, 0, 0, -u * x, -v * x]);
+                B.push(x);
+                A.push([0, 0, 0, u, v, 1, -u * y, -v * y]);
+                B.push(y);
+            }
+
+            let h = solveGaussian(A, B);
+            if (!h) return null;
+            return [
+                h[0], h[1], h[2],
+                h[3], h[4], h[5],
+                h[6], h[7], 1.0
+            ];
+        }
+
+        function solveGaussian(A, B) {
+            let n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) {
+                    if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                }
+                let tmpA = A[i]; A[i] = A[maxRow]; A[maxRow] = tmpA;
+                let tmpB = B[i]; B[i] = B[maxRow]; B[maxRow] = tmpB;
+
+                if (Math.abs(A[i][i]) < 1e-10) return null;
+
+                for (let k = i + 1; k < n; k++) {
+                    let c = -A[k][i] / A[i][i];
+                    for (let j = i; j < n; j++) {
+                        if (i === j) A[k][j] = 0;
+                        else A[k][j] += c * A[i][j];
+                    }
+                    B[k] += c * B[i];
+                }
+            }
+
+            let x = new Array(n);
+            for (let i = n - 1; i >= 0; i--) {
+                x[i] = B[i] / A[i][i];
+                for (let k = i - 1; k >= 0; k--) B[k] -= A[k][i] * x[i];
+            }
+            return x;
+        }
+
+        function getRotatedImageUrl(srcUrl, rotationDegrees) {
+            return new Promise((resolve) => {
+                if (!rotationDegrees || rotationDegrees % 360 === 0) {
+                    resolve(srcUrl);
+                    return;
+                }
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const rad = (rotationDegrees * Math.PI) / 180;
+                    
+                    if (rotationDegrees === 90 || rotationDegrees === 270) {
+                        canvas.width = img.height;
+                        canvas.height = img.width;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(rad);
+                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    resolve(canvas.toDataURL());
+                };
+                img.src = srcUrl;
+            });
+        }
+
+        function refreshAll() {
+            try {
+                const totalPages = getTotalPages();
+                if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                updateGridLayout();
+                updatePageModeControls();
+
+                if (pageModes[currentPage] === 'bw') {
+                    a4Preview.classList.add('mode-bw');
+                } else {
+                    a4Preview.classList.remove('mode-bw');
+                }
+
+                displayA4Preview();
+                updateButtons();
+            } catch (err) {
+                console.error("Error in refreshAll:", err);
+            }
+        }
+
+        function updateGridLayout() {
+            const cfg = getPageConfig(currentPage);
+            rowsInput.value = cfg.rows;
+            columnsInput.value = cfg.cols;
+            gapInput.value = cfg.gap;
+            const isFree = !!cfg.free;
+            rowsInput.disabled = isFree;
+            columnsInput.disabled = isFree;
+            a4PreviewGrid.classList.toggle('free-layout', isFree);
+            if (isFree) {
+                a4PreviewGrid.style.display = 'block';
+                a4PreviewGrid.style.gridTemplateColumns = 'none';
+                a4PreviewGrid.style.gridTemplateRows = 'none';
+                a4PreviewGrid.style.gap = '0px';
+                gridArrangeBtn.textContent = '▦ Grid: OFF';
+                gridArrangeBtn.title = 'Grid OFF: Word जैसा free page';
+                gridArrangeBtn.classList.remove('active-btn');
+            } else {
+                a4PreviewGrid.style.display = 'grid';
+                a4PreviewGrid.style.gridTemplateColumns = `repeat(${cfg.cols}, minmax(0, 1fr))`;
+                a4PreviewGrid.style.gridTemplateRows = `repeat(${cfg.rows}, minmax(0, 1fr))`;
+                a4PreviewGrid.style.gap = `${cfg.gap}px`;
+                gridArrangeBtn.textContent = '▦ Grid: ON';
+                gridArrangeBtn.title = 'Grid ON: Rows × Columns में बराबर फोटो';
+                gridArrangeBtn.classList.add('active-btn');
+            }
+        }
+
+        function deleteBlankPage(pageNum) {
+            pageNum = parseInt(pageNum);
+            if (!Number.isInteger(pageNum) || pageNum < 1) return;
+            if (getPagePhotoIndices(pageNum).length > 0) {
+                alert(`पेज ${pageNum} खाली नहीं है। पहले उसकी फोटो दूसरे पेज पर ले जाएँ।`);
+                return;
+            }
+
+            const totalPages = getTotalPages();
+            if (pageNum >= totalPages) {
+                delete pageConfigs[pageNum];
+                delete pageModes[pageNum];
+                refreshAll();
+                return;
+            }
+
+            saveStateToHistory();
+            for (let i = pageNum + 1; i <= totalPages; i++) {
+                const movedIndices = getPagePhotoIndices(i);
+                movedIndices.forEach(idx => { photos[idx].page = i - 1; });
+                if (pageConfigs[i]) pageConfigs[i - 1] = pageConfigs[i];
+                if (pageModes[i]) pageModes[i - 1] = pageModes[i];
+            }
+            delete pageConfigs[totalPages];
+            delete pageModes[totalPages];
+            if (currentPage > pageNum) currentPage--;
+            refreshAll();
+        }
+
+        function updatePageModeControls() {
+            const totalPages = getTotalPages();
+            pageColorControlsContainer.innerHTML = '';
+
+            for (let p = 1; p <= totalPages; p++) {
+                if (!pageModes[p]) pageModes[p] = 'color';
+
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'inline-flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '2px';
+                wrapper.style.padding = '2px 5px';
+                wrapper.style.borderRadius = '3px';
+                wrapper.style.cursor = 'pointer';
+
+                if (p === currentPage) {
+                    wrapper.style.backgroundColor = '#d1ecf1';
+                    wrapper.style.border = '1px solid #007bff';
+                } else {
+                    wrapper.style.backgroundColor = '#f8f9fa';
+                    wrapper.style.border = '1px solid #ccc';
+                }
+
+                const label = document.createElement('span');
+                label.style.fontSize = '12px';
+                label.style.fontWeight = 'bold';
+                label.style.color = (p === currentPage) ? '#007bff' : '#333';
+                label.textContent = `P${p}:`;
+                label.title = `Click to go directly to Page ${p}`;
+
+                label.onclick = () => {
+                    currentPage = p;
+                    refreshAll();
+                };
+
+                const select = document.createElement('select');
+                select.style.width = '60px';
+                select.style.fontSize = '11px';
+                select.style.padding = '1px';
+                
+                const optColor = document.createElement('option');
+                optColor.value = 'color';
+                optColor.textContent = 'Color';
+                if (pageModes[p] === 'color') optColor.selected = true;
+
+                const optBw = document.createElement('option');
+                optBw.value = 'bw';
+                optBw.textContent = 'B&W';
+                if (pageModes[p] === 'bw') optBw.selected = true;
+
+                select.appendChild(optColor);
+                select.appendChild(optBw);
+
+                select.addEventListener('change', (e) => {
+                    saveStateToHistory();
+                    pageModes[p] = e.target.value;
+                    refreshAll();
+                });
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(select);
+
+                const deletePageBtn = document.createElement('button');
+                deletePageBtn.textContent = '🗑️';
+                deletePageBtn.title = `खाली Page ${p} हटाएँ`;
+                deletePageBtn.style.fontSize = '11px';
+                deletePageBtn.style.padding = '1px 4px';
+                deletePageBtn.style.cursor = 'pointer';
+                deletePageBtn.style.border = '1px solid #dc3545';
+                deletePageBtn.style.borderRadius = '3px';
+                deletePageBtn.style.background = '#fff';
+                deletePageBtn.style.color = '#dc3545';
+                deletePageBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteBlankPage(p);
+                };
+                wrapper.appendChild(deletePageBtn);
+                pageColorControlsContainer.appendChild(wrapper);
+            }
+        }
+
+        function attachPullResizeHandles(imgWrapper, container, img, photoObj, pageIsFree = false) {
+            const handles = [
+                { class: 'handle-br', dir: 'br', title: 'Bottom-Right' },
+                { class: 'handle-bl', dir: 'bl', title: 'Bottom-Left' },
+                { class: 'handle-tr', dir: 'tr', title: 'Top-Right' },
+                { class: 'handle-tl', dir: 'tl', title: 'Top-Left' },
+                { class: 'handle-r',  dir: 'r',  title: 'Right' },
+                { class: 'handle-b',  dir: 'b',  title: 'Bottom' },
+                { class: 'handle-l',  dir: 'l',  title: 'Left' },
+                { class: 'handle-t',  dir: 't',  title: 'Top' }
+            ];
+
+            const handleEls = [];
+
+            function syncHandlePositions() {
+                if (!imgWrapper.isConnected) return;
+
+                const wrapperRect = imgWrapper.getBoundingClientRect();
+                const imageRect = img.getBoundingClientRect();
+                if (wrapperRect.width <= 0 || wrapperRect.height <= 0 || imageRect.width <= 0 || imageRect.height <= 0) return;
+
+                const left = ((imageRect.left - wrapperRect.left) / wrapperRect.width) * 100;
+                const top = ((imageRect.top - wrapperRect.top) / wrapperRect.height) * 100;
+                const right = ((imageRect.right - wrapperRect.left) / wrapperRect.width) * 100;
+                const bottom = ((imageRect.bottom - wrapperRect.top) / wrapperRect.height) * 100;
+                const midX = (left + right) / 2;
+                const midY = (top + bottom) / 2;
+
+                const map = {
+                    'handle-tl':[left,top], 'handle-t':[midX,top], 'handle-tr':[right,top],
+                    'handle-r':[right,midY], 'handle-br':[right,bottom], 'handle-b':[midX,bottom],
+                    'handle-bl':[left,bottom], 'handle-l':[left,midY]
+                };
+
+                handleEls.forEach(({el, cls}) => {
+                    const pos = map[cls];
+                    if (!pos) return;
+                    el.style.left = `${pos[0]}%`;
+                    el.style.top = `${pos[1]}%`;
+                    el.style.right = 'auto';
+                    el.style.bottom = 'auto';
+                    el.style.transform = 'translate(-50%, -50%)';
+                });
+            }
+
+            handles.forEach(h => {
+                const handleDiv = document.createElement('div');
+                handleDiv.className = `resize-handle ${h.class}`;
+                handleDiv.title = h.title;
+                handleEls.push({el: handleDiv, cls: h.class});
+
+                handleDiv.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    saveStateToHistory();
+
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const startRect = img.getBoundingClientRect();
+                    const startWidth = Math.max(20, startRect.width);
+                    const startHeight = Math.max(20, startRect.height);
+
+                    function doDrag(me) {
+                        me.preventDefault();
+
+                        const dx = (me.clientX - startX) / currentScale;
+                        const dy = (me.clientY - startY) / currentScale;
+
+                        let newW = startWidth;
+                        let newH = startHeight;
+
+                        if (h.dir.includes('r')) newW = startWidth + dx;
+                        if (h.dir.includes('l')) newW = startWidth - dx;
+                        if (h.dir.includes('b')) newH = startHeight + dy;
+                        if (h.dir.includes('t')) newH = startHeight - dy;
+
+                        newW = Math.max(20, newW);
+                        newH = Math.max(20, newH);
+
+                        photoObj.pullW = newW;
+                        photoObj.pullH = newH;
+                        photoObj.freeWidth = newW / (photoObj.unit === 'inch' ? 96 : 37.8);
+                        photoObj.freeHeight = newH / (photoObj.unit === 'inch' ? 96 : 37.8);
+                        photoObj.fitMode = 'manual_pull';
+
+                        if (pageConfigs[photoObj.page || currentPage]?.free) {
+                            if (h.dir.includes('l')) {
+                                photoObj.freeX = Math.max(0, (photoObj.freeX || 0) + (startWidth - newW));
+                            }
+                            if (h.dir.includes('t')) {
+                                photoObj.freeY = Math.max(0, (photoObj.freeY || 0) + (startHeight - newH));
+                            }
+                            const card = imgWrapper.closest('.photo-card');
+                            if (card) {
+                                card.style.left = `${photoObj.freeX || 0}px`;
+                                card.style.top = `${photoObj.freeY || 0}px`;
+                            }
+                        }
+
+                        img.style.width = `${newW}px`;
+                        img.style.height = `${newH}px`;
+                        img.style.maxWidth = 'none';
+                        img.style.maxHeight = 'none';
+                        img.style.objectFit = 'fill';
+                        imgWrapper.style.width = `${newW}px`;
+                        imgWrapper.style.height = `${newH}px`;
+
+                        requestAnimationFrame(syncHandlePositions);
+                    }
+
+                    function stopDrag() {
+                        document.removeEventListener('mousemove', doDrag);
+                        document.removeEventListener('mouseup', stopDrag);
+                        refreshAll();
+                    }
+
+                    document.addEventListener('mousemove', doDrag);
+                    document.addEventListener('mouseup', stopDrag);
+                });
+
+                imgWrapper.appendChild(handleDiv);
+            });
+
+            img.addEventListener('load', () => requestAnimationFrame(syncHandlePositions));
+            requestAnimationFrame(syncHandlePositions);
+        }
+
+        function getPhotoCurrentSizeText(p) {
+            if (!p) return '';
+            const unit = p.unit === 'inch' ? 'in' : 'cm';
+            const ref = getReferencePrintSize(p, unit);
+            return `Original Size: ${ref.width.toFixed(2)} × ${ref.height.toFixed(2)} ${unit}`;
+        }
+
+        function showPhotoSidebar(index) {
+            selectedPhotoIndex = index;
+            document.querySelectorAll('.photo-card.selected-photo').forEach(c => c.classList.remove('selected-photo'));
+            const card = document.querySelector(`.photo-card[data-index="${index}"]`);
+            if (card) card.classList.add('selected-photo');
+            const p = photos[index];
+            sidebarPhotoName.textContent = p ? (p.name || `Photo ${index + 1}`) : '';
+            if (sidebarPhotoSize) sidebarPhotoSize.textContent = getPhotoCurrentSizeText(p);
+            photoActionSidebar.classList.add('show');
+        }
+
+        function hidePhotoSidebar() {
+            selectedPhotoIndex = null;
+            document.querySelectorAll('.photo-card.selected-photo').forEach(c => c.classList.remove('selected-photo'));
+            photoActionSidebar.classList.remove('show');
+        }
+
+        function triggerHiddenPhotoTool(action) {
+            if (selectedPhotoIndex === null) return;
+            const card = document.querySelector(`.photo-card[data-index="${selectedPhotoIndex}"]`);
+            if (!card) return;
+            const buttons = Array.from(card.querySelectorAll('.photo-toolbar .tool-btn'));
+            const labels = { center:'Center', rotate:'Rotate', straighten:'Straighten', crop:'Crop', stretch:'Stretch', size:'Size', reset:'Reset Photo', light:'Light', delete:'Delete' };
+            const target = buttons.find(b => (b.textContent || '').includes(labels[action] || ''));
+            if (target) target.click();
+        }
+
+        const movePageModal = document.getElementById('movePageModal');
+        const movePageList = document.getElementById('movePageList');
+        const movePageHint = document.getElementById('movePageHint');
+        const movePageClose = document.getElementById('movePageClose');
+
+        function openMovePagePicker() {
+            if (selectedPhotoIndex === null || !photos[selectedPhotoIndex]) return;
+            const total = Math.max(1, getTotalPages());
+            movePageList.innerHTML = '';
+            movePageHint.textContent = `Photo: ${photos[selectedPhotoIndex].name || 'Selected photo'} — page चुनें:`;
+            for (let p = 1; p <= total; p++) {
+                const b = document.createElement('button');
+                b.textContent = `Page ${p}`;
+                if ((photos[selectedPhotoIndex].page || 1) === p) b.classList.add('current-page');
+                b.onclick = () => { movePhotoToPage(selectedPhotoIndex, p); movePageModal.style.display='none'; };
+                movePageList.appendChild(b);
+            }
+            const newBtn = document.createElement('button');
+            newBtn.className = 'new-page';
+            newBtn.textContent = `➕ +${total + 1}`;
+            newBtn.title = `Create Page ${total + 1} and move photo there`;
+            newBtn.onclick = () => { getPageConfig(total + 1); movePhotoToPage(selectedPhotoIndex, total + 1); currentPage = total + 1; movePageModal.style.display='none'; };
+            movePageList.appendChild(newBtn);
+            movePageModal.style.display = 'flex';
+        }
+        movePageClose.onclick = () => movePageModal.style.display='none';
+        movePageModal.addEventListener('click', e => { if (e.target === movePageModal) movePageModal.style.display='none'; });
+
+        function moveSelectedPhoto() { openMovePagePicker(); }
+
+        gridArrangeBtn.addEventListener('click', () => {
+            const page = currentPage;
+            const cfg = getPageConfig(page);
+            saveStateToHistory();
+            const indices = getPagePhotoIndices(page);
+
+            if (cfg.free) {
+                cfg.free = false;
+                rebalanceOverflowFromPage(page);
+            } else {
+                cfg.free = true;
+                indices.forEach((idx, i) => {
+                    const p = photos[idx];
+                    const fw = Number(p.freeWidth);
+                    const fh = Number(p.freeHeight);
+                    if (!(fw > 0 && fh > 0)) {
+                        if (p.customWidth > 0 && p.customHeight > 0) {
+                            p.freeWidth = p.customWidth; p.freeHeight = p.customHeight;
+                        } else {
+                            p.freeWidth = 10; p.freeHeight = 7;
+                        }
+                    }
+                    if (!Number.isFinite(Number(p.freeX))) p.freeX = 10 + (i % 2) * 290;
+                    if (!Number.isFinite(Number(p.freeY))) p.freeY = 10 + Math.floor(i / 2) * 220;
+                });
+            }
+            refreshAll();
+        });
+
+        applySizeAllBtn.addEventListener('click', () => {
+            if (selectedPhotoIndex === null || !photos[selectedPhotoIndex]) return;
+            const w=parseFloat(inputWidthVal.value), h=parseFloat(inputHeightVal.value), u=unitSelect.value;
+            if (!(w>0 && h>0)) return;
+            saveStateToHistory();
+            const page=photos[selectedPhotoIndex].page || currentPage;
+            getPagePhotoIndices(page).forEach(idx => { const p=photos[idx]; p.fitMode='custom'; p.unit=u; p.customWidth=w; p.customHeight=h; p.freeWidth=w; p.freeHeight=h; p.pullW=null; p.pullH=null; });
+            sizeModal.style.display='none';
+            refreshAll();
+        });
+
+        autoArrangeSizeBtn.addEventListener('click', () => {
+            const w=parseFloat(inputWidthVal.value), h=parseFloat(inputHeightVal.value), u=unitSelect.value;
+            if (!(w>0 && h>0)) return;
+            saveStateToHistory();
+            const page=photos[activeEditingIndex]?.page || currentPage;
+            const cfg=getPageConfig(page); cfg.free=true;
+            const indices=getPagePhotoIndices(page);
+            const px=u==='inch'?w*96:w*37.8, py=u==='inch'?h*96:h*37.8, gap=8, pageW=20*37.8;
+            const cols=Math.max(1,Math.floor((pageW+gap)/(px+gap)));
+            indices.forEach((idx,i)=>{ const p=photos[idx]; p.fitMode='custom'; p.unit=u; p.customWidth=w; p.customHeight=h; p.freeWidth=w; p.freeHeight=h; p.pullW=null; p.pullH=null; p.freeX=(i%cols)*(px+gap); p.freeY=Math.floor(i/cols)*(py+gap); });
+            sizeModal.style.display='none'; refreshAll();
+        });
+
+        photoActionSidebar.querySelectorAll('button[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                if (action === 'close') return hidePhotoSidebar();
+                if (action === 'move') return moveSelectedPhoto();
+                if (action === 'reset') {
+                    resetPhotoToInitialState(selectedPhotoIndex);
+                    return;
+                }
+                if (action === 'delete') {
+                    if (selectedPhotoIndex !== null && photos[selectedPhotoIndex]) {
+                        saveStateToHistory();
+                        photos.splice(selectedPhotoIndex, 1);
+                        hidePhotoSidebar();
+                        refreshAll();
+                    }
+                    return;
+                }
+                triggerHiddenPhotoTool(action);
+            });
+        });
+
+        function createPhotoCardElement(photoObj, globalIndex, pageNumber, isPrint = false) {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.dataset.index = globalIndex;
+            const pageIsFree = !!(pageConfigs[pageNumber] && pageConfigs[pageNumber].free);
+            if (pageIsFree) {
+                const fw = Number(photoObj.freeWidth) > 0 ? Number(photoObj.freeWidth) : (Number(photoObj.customWidth) > 0 ? Number(photoObj.customWidth) : 10);
+                const fh = Number(photoObj.freeHeight) > 0 ? Number(photoObj.freeHeight) : (Number(photoObj.customHeight) > 0 ? Number(photoObj.customHeight) : 7);
+                const factor = photoObj.unit === 'inch' ? 96 : 37.8;
+                card.classList.add('free-photo-card');
+                card.style.left = `${photoObj.freeX || 0}px`;
+                card.style.top = `${photoObj.freeY || 0}px`;
+                card.style.width = `${fw * factor}px`;
+                card.style.height = `${fh * factor}px`;
+                card.style.minHeight = '0';
+
+                if (isPrint && photoObj.fitMode === 'stretch') {
+                    const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                    if (rot === 90 || rot === 270) {
+                        card.style.width = `${fh * factor}px`;
+                        card.style.height = `${fw * factor}px`;
+                    }
+                }
+            }
+            if (!isPrint && !photoObj.isBlank) {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.resize-handle') || e.target.closest('.photo-toolbar')) return;
+                    showPhotoSidebar(globalIndex);
+                });
+            }
+
+            if (isPrint) {
+                card.style.border = 'none';
+                card.style.background = 'transparent';
+                card.style.boxShadow = 'none';
+            }
+
+            if (photoObj.isBlank) {
+                if (!isPrint) {
+                    card.style.border = '1px dashed #ccc';
+                    card.style.justifyContent = 'center';
+                    card.style.alignItems = 'center';
+                    card.innerHTML = '<span style="color:#aaa; font-size:12px; font-weight:bold;">Empty Slot</span>';
+                    
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'tool-btn delete-btn';
+                    delBtn.style.marginTop = '6px';
+                    delBtn.textContent = '❌ Remove';
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        saveStateToHistory();
+                        photos.splice(globalIndex, 1);
+                        refreshAll();
+                    };
+                    card.appendChild(delBtn);
+                }
+                return card;
+            }
+
+            const container = document.createElement('div');
+            container.className = 'photo-container';
+            container.style.background = 'transparent';
+            
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'img-wrapper';
+            imgWrapper.style.background = 'transparent';
+
+            const offX = photoObj.offsetX || 0;
+            const offY = photoObj.offsetY || 0;
+            imgWrapper.style.transform = pageIsFree ? 'translate(0, 0)' : `translate(${offX}px, ${offY}px)`;
+            if (pageIsFree) {
+                imgWrapper.style.cursor = 'grab';
+                imgWrapper.style.pointerEvents = 'auto';
+            }
+
+            const img = document.createElement('img');
+            img.src = photoObj.url;
+            img.alt = photoObj.name || 'Photo';
+            
+            const globalZoom = parseInt(resizeSlider.value) / 100;
+            const hasCustomSize = Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0;
+            const hasManualSize = photoObj.fitMode === 'manual_pull' && Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0;
+            const factor = photoObj.unit === 'inch' ? 96 : 37.8;
+
+            let savedW = null, savedH = null;
+            if (hasManualSize) {
+                savedW = Number(photoObj.pullW);
+                savedH = Number(photoObj.pullH);
+            } else if (hasCustomSize) {
+                savedW = Number(photoObj.customWidth) * factor;
+                savedH = Number(photoObj.customHeight) * factor;
+            } else if (pageIsFree && Number(photoObj.freeWidth) > 0 && Number(photoObj.freeHeight) > 0) {
+                savedW = Number(photoObj.freeWidth) * factor;
+                savedH = Number(photoObj.freeHeight) * factor;
+            }
+
+            if (photoObj.fitMode === 'stretch') {
+                imgWrapper.classList.add('stretch-mode');
+                const level = Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0));
+                const stretchScale = [1, 0.9, 0.8][level];
+
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.maxWidth = 'none';
+                img.style.maxHeight = 'none';
+                img.style.objectFit = 'fill';
+                img.style.transformOrigin = 'center center';
+                img.style.transform = `scale(${stretchScale}) rotate(${photoObj.rotation}deg)`;
+            } else if (savedW && savedH) {
+                img.style.setProperty('width', `${savedW * globalZoom}px`, 'important');
+                img.style.setProperty('height', `${savedH * globalZoom}px`, 'important');
+                img.style.setProperty('max-width', 'none', 'important');
+                img.style.setProperty('max-height', 'none', 'important');
+                img.style.setProperty('object-fit', 'fill', 'important');
+            } else if (!pageIsFree) {
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.maxWidth = 'none';
+                img.style.maxHeight = 'none';
+                img.style.objectFit = 'fill';
+            } else {
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.objectFit = 'contain';
+            }
+            if (photoObj.fitMode !== 'stretch') {
+                img.style.transform = `rotate(${photoObj.rotation}deg)`;
+            }
+
+            if (pageIsFree && savedW && savedH) {
+                const quarterTurn = Math.abs(Number(photoObj.rotation) % 180) === 90;
+                const displayW = (photoObj.fitMode === 'stretch' && quarterTurn) ? savedH : savedW;
+                const displayH = (photoObj.fitMode === 'stretch' && quarterTurn) ? savedW : savedH;
+                imgWrapper.style.setProperty('width', `${displayW * globalZoom}px`, 'important');
+                imgWrapper.style.setProperty('height', `${displayH * globalZoom}px`, 'important');
+                imgWrapper.style.setProperty('max-width', 'none', 'important');
+                imgWrapper.style.setProperty('max-height', 'none', 'important');
+                container.style.setProperty('width', `${displayW * globalZoom}px`, 'important');
+                container.style.setProperty('height', `${displayH * globalZoom}px`, 'important');
+            } else if (hasManualSize) {
+                imgWrapper.style.setProperty('width', `${savedW * globalZoom}px`, 'important');
+                imgWrapper.style.setProperty('height', `${savedH * globalZoom}px`, 'important');
+            }
+
+            const finalBright = photoObj.brightness || 100;
+            const isBwPage = pageModes[pageNumber] === 'bw';
+            let filterVal = `brightness(${finalBright}%)`;
+            if (isBwPage) filterVal += ` grayscale(100%)`;
+            img.style.filter = filterVal;
+
+            const borderWidth = borderWidthInput.value;
+            const borderColor = borderColorInput.value;
+            if (borderWidth > 0) {
+                img.style.border = `${borderWidth}px solid ${borderColor}`;
+            } else {
+                img.style.border = 'none';
+            }
+
+            imgWrapper.appendChild(img);
+            container.appendChild(imgWrapper);
+            card.appendChild(container);
+
+            if (isPrint && pageIsFree && photoObj.fitMode === 'stretch' && savedW && savedH) {
+                const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                const quarterTurn = rot === 90 || rot === 270;
+                const level = Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0));
+                const scale = [1, 0.9, 0.8][level];
+                const displayW = quarterTurn ? savedH : savedW;
+                const displayH = quarterTurn ? savedW : savedH;
+
+                imgWrapper.style.setProperty('width', `${displayW}px`, 'important');
+                imgWrapper.style.setProperty('height', `${displayH}px`, 'important');
+                imgWrapper.style.setProperty('max-width', 'none', 'important');
+                imgWrapper.style.setProperty('max-height', 'none', 'important');
+                imgWrapper.style.setProperty('position', 'relative', 'important');
+                imgWrapper.style.setProperty('overflow', 'visible', 'important');
+
+                img.style.setProperty('position', 'absolute', 'important');
+                img.style.setProperty('left', '50%', 'important');
+                img.style.setProperty('top', '50%', 'important');
+                img.style.setProperty('width', `${savedW}px`, 'important');
+                img.style.setProperty('height', `${savedH}px`, 'important');
+                img.style.setProperty('max-width', 'none', 'important');
+                img.style.setProperty('max-height', 'none', 'important');
+                img.style.setProperty('object-fit', 'fill', 'important');
+                img.style.setProperty('transform-origin', 'center center', 'important');
+                img.style.setProperty('transform', `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`, 'important');
+            }
+
+            if (!pageIsFree && photoObj.fitMode === 'stretch') {
+                requestAnimationFrame(() => {
+                    if (!img.isConnected) return;
+                    const cw = Math.max(2, container.clientWidth || container.getBoundingClientRect().width);
+                    const ch = Math.max(2, container.clientHeight || container.getBoundingClientRect().height);
+                    const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                    const quarterTurn = rot === 90 || rot === 270;
+                    const level = Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0));
+                    const scale = [1, 0.9, 0.8][level];
+
+                    imgWrapper.style.setProperty('width', '100%', 'important');
+                    imgWrapper.style.setProperty('height', '100%', 'important');
+                    imgWrapper.style.setProperty('max-width', 'none', 'important');
+                    imgWrapper.style.setProperty('max-height', 'none', 'important');
+                    imgWrapper.style.setProperty('overflow', 'visible', 'important');
+                    imgWrapper.style.setProperty('position', 'relative', 'important');
+
+                    img.style.setProperty('position', 'absolute', 'important');
+                    img.style.setProperty('left', '50%', 'important');
+                    img.style.setProperty('top', '50%', 'important');
+                    img.style.setProperty('display', 'block', 'important');
+                    img.style.setProperty('box-sizing', 'border-box', 'important');
+                    img.style.setProperty('max-width', 'none', 'important');
+                    img.style.setProperty('max-height', 'none', 'important');
+                    img.style.setProperty('object-fit', 'fill', 'important');
+                    img.style.setProperty('transform-origin', 'center center', 'important');
+
+                    if (quarterTurn) {
+                        img.style.setProperty('width', `${ch}px`, 'important');
+                        img.style.setProperty('height', `${cw}px`, 'important');
+                    } else {
+                        img.style.setProperty('width', `${cw}px`, 'important');
+                        img.style.setProperty('height', `${ch}px`, 'important');
+                    }
+                    img.style.setProperty('transform', `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`, 'important');
+                });
+            }
+
+            if (!isPrint) {
+                let isDraggingPhoto = false;
+                let startX = 0, startY = 0;
+                let startOffX = 0, startOffY = 0;
+                let startFreeX = 0, startFreeY = 0;
+                let targetSwapIndex = null;
+
+                const dragTarget = pageIsFree ? imgWrapper : container;
+                dragTarget.addEventListener('mousedown', (e) => {
+                    if (e.target.classList.contains('resize-handle') || e.target.closest('.photo-toolbar')) return;
+                    
+                    e.preventDefault();
+                    isDraggingPhoto = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startOffX = photoObj.offsetX || 0;
+                    startOffY = photoObj.offsetY || 0;
+                    startFreeX = Number.isFinite(Number(photoObj.freeX)) ? Number(photoObj.freeX) : 0;
+                    startFreeY = Number.isFinite(Number(photoObj.freeY)) ? Number(photoObj.freeY) : 0;
+                    targetSwapIndex = null;
+
+                    container.style.cursor = 'grabbing';
+
+                    function onMouseMove(me) {
+                        if (!isDraggingPhoto) return;
+
+                        if (pageIsFree) {
+                            const dx = (me.clientX - startX) / currentScale;
+                            const dy = (me.clientY - startY) / currentScale;
+                            photoObj.freeX = Math.max(0, Math.round(startFreeX + dx));
+                            photoObj.freeY = Math.max(0, Math.round(startFreeY + dy));
+                            card.style.left = `${photoObj.freeX}px`;
+                            card.style.top = `${photoObj.freeY}px`;
+                            return;
+                        }
+
+                        const allCards = document.querySelectorAll('.photo-card');
+                        targetSwapIndex = null;
+
+                        allCards.forEach(c => {
+                            const rect = c.getBoundingClientRect();
+                            if (me.clientX >= rect.left && me.clientX <= rect.right &&
+                                me.clientY >= rect.top && me.clientY <= rect.bottom) {
+                                const hoverIdx = parseInt(c.dataset.index);
+                                if (hoverIdx !== globalIndex) {
+                                    targetSwapIndex = hoverIdx;
+                                    c.style.borderColor = '#007bff';
+                                    c.style.borderStyle = 'solid';
+                                    c.style.borderWidth = '2px';
+                                } else {
+                                    c.style.borderColor = 'rgba(0, 123, 255, 0.3)';
+                                    c.style.borderStyle = 'dashed';
+                                    c.style.borderWidth = '1px';
+                                }
+                            } else {
+                                c.style.borderColor = 'rgba(0, 123, 255, 0.3)';
+                                c.style.borderStyle = 'dashed';
+                                c.style.borderWidth = '1px';
+                            }
+                        });
+
+                        const dx = (me.clientX - startX) / currentScale;
+                        const dy = (me.clientY - startY) / currentScale;
+                        
+                        photoObj.offsetX = Math.round(startOffX + dx);
+                        photoObj.offsetY = Math.round(startOffY + dy);
+                        imgWrapper.style.transform = `translate(${photoObj.offsetX}px, ${photoObj.offsetY}px)`;
+                    }
+
+                    function onMouseUp() {
+                        if (isDraggingPhoto) {
+                            isDraggingPhoto = false;
+                            container.style.cursor = 'grab';
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+
+                            document.querySelectorAll('.photo-card').forEach(c => {
+                                c.style.borderColor = 'rgba(0, 123, 255, 0.3)';
+                                c.style.borderStyle = 'dashed';
+                                c.style.borderWidth = '1px';
+                            });
+
+                            if (targetSwapIndex !== null && targetSwapIndex !== globalIndex) {
+                                saveStateToHistory();
+                                
+                                photoObj.offsetX = 0;
+                                photoObj.offsetY = 0;
+                                if (photos[targetSwapIndex]) {
+                                    photos[targetSwapIndex].offsetX = 0;
+                                    photos[targetSwapIndex].offsetY = 0;
+                                }
+
+                                const temp = photos[globalIndex];
+                                photos[globalIndex] = photos[targetSwapIndex];
+                                photos[targetSwapIndex] = temp;
+
+                                refreshAll();
+                            } else {
+                                saveStateToHistory();
+                            }
+                        }
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                attachPullResizeHandles(imgWrapper, container, img, photoObj, pageIsFree);
+
+                const toolbar = document.createElement('div');
+                toolbar.className = 'photo-toolbar';
+
+                const pageSelect = document.createElement('select');
+                pageSelect.className = 'tool-select';
+                pageSelect.title = 'Move to Page (Choose or Enter Page No)';
+
+                const defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = '📄 Move Page';
+                defaultOpt.disabled = true;
+                defaultOpt.selected = true;
+                pageSelect.appendChild(defaultOpt);
+
+                const promptOpt = document.createElement('option');
+                promptOpt.value = 'prompt';
+                promptOpt.textContent = '🔢 Enter Page No...';
+                pageSelect.appendChild(promptOpt);
+
+                const totalPages = getTotalPages() || 1;
+
+                for (let p = 1; p <= totalPages; p++) {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = `Page ${p}`;
+                    pageSelect.appendChild(opt);
+                }
+
+                const newPageOpt = document.createElement('option');
+                newPageOpt.value = totalPages + 1;
+                newPageOpt.textContent = `➕ +${totalPages + 1}`;
+                pageSelect.appendChild(newPageOpt);
+
+                pageSelect.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    let targetPage = e.target.value;
+                    
+                    if (targetPage === 'prompt') {
+                        const userPage = prompt("किस पेज नंबर पर फोटो ट्रांसफर करनी है? (Enter Page Number):", currentPage);
+                        if (userPage !== null && userPage.trim() !== '') {
+                            targetPage = parseInt(userPage.trim());
+                        } else {
+                            pageSelect.value = '';
+                            return;
+                        }
+                    }
+
+                    if (targetPage) movePhotoToPage(globalIndex, targetPage);
+                });
+
+                const centerBtn = document.createElement('button');
+                centerBtn.className = 'tool-btn';
+                centerBtn.textContent = '🎯 Center';
+                centerBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    saveStateToHistory();
+                    photoObj.offsetX = 0;
+                    photoObj.offsetY = 0;
+                    refreshAll();
+                };
+
+                const rotBtn = document.createElement('button');
+                rotBtn.className = 'tool-btn';
+                rotBtn.textContent = '🔄 Rotate';
+                rotBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    saveStateToHistory();
+                    photoObj.rotation = (photoObj.rotation + 90) % 360;
+                    refreshAll();
+                };
+
+                const perspBtn = document.createElement('button');
+                perspBtn.className = 'tool-btn';
+                perspBtn.textContent = '📐 Straighten';
+                perspBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    activeEditingIndex = globalIndex;
+                    if (photoObj.rotation !== 0) {
+                        const rotatedUrl = await getRotatedImageUrl(photoObj.url, photoObj.rotation);
+                        photoObj.url = rotatedUrl;
+                        photoObj.rotation = 0;
+                    }
+                    initPerspectiveModal(photoObj);
+                };
+
+                const cropBtn = document.createElement('button');
+                cropBtn.className = 'tool-btn';
+                cropBtn.textContent = '✂️ Crop';
+                cropBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    activeEditingIndex = globalIndex;
+                    
+                    if (photoObj.rotation !== 0) {
+                        const rotatedUrl = await getRotatedImageUrl(photoObj.url, photoObj.rotation);
+                        photoObj.url = rotatedUrl;
+                        photoObj.rotation = 0;
+                    }
+
+                    cropImageTarget.src = photoObj.url;
+                    cropModal.style.display = 'flex';
+                    if (cropperInstance) cropperInstance.destroy();
+                    
+                    if (window.Cropper) {
+                        cropperInstance = new Cropper(cropImageTarget, {
+                            viewMode: 0,
+                            autoCrop: false,
+                            dragMode: 'crop',
+                            responsive: true,
+                            restore: false,
+                            background: true,
+                            zoomOnWheel: true,
+                            zoomOnTouch: true,
+                            movable: true,
+                            scalable: true,
+                            rotatable: true
+                        });
+                        cropDragCropBtn.classList.add('active-btn');
+                        cropDragMoveBtn.classList.remove('active-btn');
+                    }
+                };
+
+                const stretchBtn = document.createElement('button');
+                const stretchLevel = photoObj.fitMode === 'stretch'
+                    ? Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0))
+                    : -1;
+                stretchBtn.className = 'tool-btn' + (stretchLevel >= 0 ? ' active-btn' : '');
+                stretchBtn.textContent = stretchLevel >= 0
+                    ? `↔️ Stretch ${stretchLevel === 0 ? '100%' : stretchLevel === 1 ? '90%' : '80%'}`
+                    : '↔️ Stretch';
+                stretchBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    saveStateToHistory();
+
+                    if (photoObj.fitMode !== 'stretch') {
+                        photoObj.fitMode = 'stretch';
+                        photoObj.stretchLevel = 0;
+                    } else {
+                        const nextLevel = ((Number(photoObj.stretchLevel) || 0) + 1) % 3;
+                        photoObj.stretchLevel = nextLevel;
+                    }
+
+                    refreshAll();
+                };
+
+                const sizeBtn = document.createElement('button');
+                sizeBtn.className = 'tool-btn';
+                sizeBtn.textContent = '📐 Size';
+                sizeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeEditingIndex = globalIndex;
+                    sizeModalFileName.textContent = `File: ${photoObj.name || ''}`;
+                    const currentUnit = photoObj.unit || 'cm';
+                    unitSelect.value = currentUnit;
+                    widthLabel.textContent = `Width (${currentUnit === 'inch' ? 'in' : 'cm'}):`;
+                    heightLabel.textContent = `Height (${currentUnit === 'inch' ? 'in' : 'cm'}):`;
+                    
+                    const ref = getReferencePrintSize(photoObj, currentUnit);
+                    if (originalSizeInfo) {
+                        originalSizeInfo.textContent = `Original Size: ${ref.width.toFixed(2)} × ${ref.height.toFixed(2)} ${currentUnit === 'inch' ? 'in' : 'cm'} (${photoObj.originalWidth || 0} × ${photoObj.originalHeight || 0} px)`;
+                    }
+
+                    let shownWidth, shownHeight;
+                    if (Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0) {
+                        shownWidth = Number(photoObj.customWidth);
+                        shownHeight = Number(photoObj.customHeight);
+                    } else {
+                        shownWidth = ref.width;
+                        shownHeight = ref.height;
+                    }
+                    inputWidthVal.value = Number(shownWidth.toFixed(2));
+                    inputHeightVal.value = Number(shownHeight.toFixed(2));
+                    sizeModal.style.display = 'flex';
+                };
+
+                const brightBtn = document.createElement('button');
+                brightBtn.className = 'tool-btn';
+                brightBtn.textContent = '☀️ Light';
+                brightBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeEditingIndex = globalIndex;
+                    modalFileName.textContent = `File: ${photoObj.name || ''}`;
+                    modalBrightnessRange.value = photoObj.brightness;
+                    modalBrightnessVal.textContent = photoObj.brightness;
+                    editModal.style.display = 'flex';
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'tool-btn delete-btn';
+                delBtn.textContent = '❌ Delete';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    saveStateToHistory();
+                    photos.splice(globalIndex, 1);
+                    refreshAll();
+                };
+
+                toolbar.appendChild(pageSelect);
+                toolbar.appendChild(centerBtn);
+                toolbar.appendChild(rotBtn);
+                toolbar.appendChild(perspBtn);
+                toolbar.appendChild(cropBtn);
+                toolbar.appendChild(stretchBtn);
+                toolbar.appendChild(sizeBtn);
+                toolbar.appendChild(brightBtn);
+                toolbar.appendChild(delBtn);
+                card.appendChild(toolbar);
+            }
+
+            return card;
+        }
+
+        function displayA4Preview() {
+            a4PreviewGrid.innerHTML = '';
+            if (photos.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'empty-placeholder';
+                placeholder.innerHTML = '📁 फोटो या PDF फाइल सेलेक्ट करने के लिए ऊपर हरे बटन पर क्लिक करें<br><br><small style="color:#007bff; font-weight:normal;">(या फोटो/PDF खींचकर सीधे इस बॉक्स में छोड़ें)</small>';
+                a4PreviewGrid.appendChild(placeholder);
+                return;
+            }
+
+            const indices = getPagePhotoIndices(currentPage);
+            indices.forEach((globalIndex) => {
+                const photoObj = photos[globalIndex];
+                if (!photoObj) return;
+                const element = createPhotoCardElement(photoObj, globalIndex, currentPage, false);
+                if (element) a4PreviewGrid.appendChild(element);
+            });
+        }
+
+        function updateButtons() {
+            const totalPages = getTotalPages();
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+            prevPageButton.disabled = currentPage <= 1;
+            nextPageButton.disabled = currentPage >= totalPages || totalPages === 0;
+            printButton.disabled = photos.length === 0;
+            downloadButton.disabled = photos.length === 0;
+            downloadCurrentButton.disabled = photos.length === 0;
+            downloadPdfButton.disabled = photos.length === 0;
+            
+            currentPageLabel.textContent = `Current Screen Page: ${currentPage}`;
+            totalPagesDisplay.textContent = `Total Pages: ${totalPages}`;
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.photo-card') && !e.target.closest('#photoActionSidebar')) hidePhotoSidebar();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedPhotoIndex !== null && photos[selectedPhotoIndex]) {
+                e.preventDefault();
+                saveStateToHistory();
+                photos.splice(selectedPhotoIndex, 1);
+                hidePhotoSidebar();
+                refreshAll();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => refreshAll());
+    </script>
+</body>
+</html>
