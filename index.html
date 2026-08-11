@@ -755,6 +755,10 @@
                 <div class="control-group">
                     <button id="rotateAllBtn" title="Rotate All Photos 90°">🔄 Rotate All</button>
                 </div>
+                <div class="control-group" style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
+                    <button id="a4ActualSizeBtn" type="button" title="Screen पर वास्तविक A4 physical size दिखाएँ">📄 A4 Actual Size</button>
+                    <button id="a4CalibrateBtn" type="button" title="Monitor की physical scale calibrate करें">📏 Calibrate Screen</button>
+                </div>
                 <div class="control-group" id="pageColorControlsContainer" style="display: flex; gap: 4px; flex-wrap: wrap;"></div>
                 
                 <div class="control-group" style="gap: 5px;">
@@ -804,6 +808,32 @@
             </div>
             <div id="movePageHint" style="font-size:11px;color:#64748b;margin-top:5px;text-align:left;"></div>
             <div id="movePageList"></div>
+        </div>
+    </div>
+
+    <!-- A4 Physical Screen Calibration -->
+    <div id="a4CalibrationModal" style="display:none; position:fixed; inset:0; z-index:2147483646; background:rgba(0,0,0,.55); align-items:center; justify-content:center;">
+        <div style="width:min(460px,92vw); background:#fff; border-radius:10px; padding:16px; box-shadow:0 10px 40px rgba(0,0,0,.35); text-align:left;">
+            <div style="font-size:17px; font-weight:800; color:#0f172a; margin-bottom:8px;">📏 Screen Calibration</div>
+            <div style="font-size:12px; line-height:1.55; color:#475569; margin-bottom:10px;">
+                नीचे की लाइन को अपनी असली ruler से नापें। फिर जितने centimeter दिखें, वह value नीचे भरें।
+                Calibration केवल इस computer/screen के लिए है।
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:7px; padding:12px; margin-bottom:10px;">
+                <div style="font-size:11px; color:#64748b; margin-bottom:5px;">Calibration line (इसे ruler से नापें)</div>
+                <div id="a4CalibrationLine" style="width:10cm; max-width:100%; height:12px; background:#111827; border-radius:2px;"></div>
+                <div style="font-size:10px; color:#64748b; margin-top:5px;">यह line nominally 10 cm के रूप में बनाई गई है; ruler से वास्तविक दिखाई देने वाली लंबाई नापें।</div>
+            </div>
+            <label style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">आपकी ruler में line कितनी cm है?</label>
+            <div style="display:flex; gap:7px; align-items:center;">
+                <input id="a4CalibrationCm" type="number" min="1" max="30" step="0.1" value="10"
+                       style="flex:1; padding:7px; border:1px solid #94a3b8; border-radius:5px; box-sizing:border-box;">
+                <span style="font-size:12px;">cm</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:7px; margin-top:13px;">
+                <button id="a4CalibrationCancel" type="button" style="background:#dc3545; color:#fff;">Cancel</button>
+                <button id="a4CalibrationSave" type="button" style="background:#198754; color:#fff; font-weight:700;">✓ Save Calibration</button>
+            </div>
         </div>
     </div>
 
@@ -1014,6 +1044,68 @@
         const printAreaContainer = document.getElementById('printAreaContainer');
         const loadingModal = document.getElementById('loadingModal');
         const loadingText = document.getElementById('loadingText');
+
+        // A4 Actual Size screen preview is isolated from photo/layout data.
+        const a4ActualSizeBtn = document.getElementById('a4ActualSizeBtn');
+        const a4CalibrateBtn = document.getElementById('a4CalibrateBtn');
+        const a4CalibrationModal = document.getElementById('a4CalibrationModal');
+        const a4CalibrationCm = document.getElementById('a4CalibrationCm');
+        const a4CalibrationCancel = document.getElementById('a4CalibrationCancel');
+        const a4CalibrationSave = document.getElementById('a4CalibrationSave');
+        let a4ActualSizeMode = false;
+        const A4_CALIBRATION_KEY = 'a4_screen_calibration_cm_per_nominal_10cm';
+        const getA4Calibration = () => {
+            const v = parseFloat(localStorage.getItem(A4_CALIBRATION_KEY));
+            return Number.isFinite(v) && v > 0 ? v : null;
+        };
+        function applyA4ActualSizeMode() {
+            if (!a4ActualSizeMode) {
+                a4Preview.style.transform = `scale(${currentScale})`;
+                a4ActualSizeBtn.textContent = '📄 A4 Actual Size';
+                return;
+            }
+            const measuredCm = getA4Calibration();
+            if (!measuredCm) {
+                a4ActualSizeMode = false;
+                a4CalibrationModal.style.display = 'flex';
+                return;
+            }
+            // The page itself remains 210mm × 297mm. This transform only controls
+            // its physical on-screen display; photo/layout data are untouched.
+            const calibrationScale = 10 / measuredCm;
+            a4Preview.style.transform = `scale(${calibrationScale})`;
+            a4ActualSizeBtn.textContent = '📄 A4 Actual: ON';
+        }
+        a4ActualSizeBtn.addEventListener('click', () => {
+            if (!getA4Calibration()) {
+                a4CalibrationModal.style.display = 'flex';
+                return;
+            }
+            a4ActualSizeMode = !a4ActualSizeMode;
+            applyA4ActualSizeMode();
+        });
+        a4CalibrateBtn.addEventListener('click', () => {
+            const saved = getA4Calibration();
+            a4CalibrationCm.value = saved ? saved : 10;
+            a4CalibrationModal.style.display = 'flex';
+        });
+        a4CalibrationCancel.addEventListener('click', () => {
+            a4CalibrationModal.style.display = 'none';
+        });
+        a4CalibrationSave.addEventListener('click', () => {
+            const cm = parseFloat(a4CalibrationCm.value);
+            if (!Number.isFinite(cm) || cm <= 0) {
+                alert('कृपया ruler से मापी गई सही cm value डालें।');
+                return;
+            }
+            localStorage.setItem(A4_CALIBRATION_KEY, String(cm));
+            a4CalibrationModal.style.display = 'none';
+            a4ActualSizeMode = true;
+            applyA4ActualSizeMode();
+        });
+        a4CalibrationModal.addEventListener('click', (e) => {
+            if (e.target === a4CalibrationModal) a4CalibrationModal.style.display = 'none';
+        });
 
         const editModal = document.getElementById('editModal');
         const modalFileName = document.getElementById('modalFileName');
@@ -1228,7 +1320,11 @@
                 } else {
                     currentScale = Math.max(currentScale - 0.1, 0.4);
                 }
-                a4Preview.style.transform = `scale(${currentScale})`;
+                if (a4ActualSizeMode) {
+                    applyA4ActualSizeMode();
+                } else {
+                    a4Preview.style.transform = `scale(${currentScale})`;
+                }
             }
         }, { passive: false });
 
@@ -1626,6 +1722,7 @@
         resizeSlider.addEventListener('input', () => {
             zoomVal.textContent = resizeSlider.value;
             refreshAll();
+            if (a4ActualSizeMode) applyA4ActualSizeMode();
         });
 
         rotateAllBtn.addEventListener('click', () => {
