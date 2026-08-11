@@ -1786,14 +1786,17 @@
         });
 
         printButton.addEventListener('click', async () => {
-            // LOW-MEMORY PRINT: render each page to a small JPEG buffer before
-            // adding it to the PDF. Never keep the large canvas or a PNG/dataURL
-            // for more than one page. This is intentionally isolated to Print.
+            // PRINT ONLY: keep the existing editor/preview untouched.
+            // Each A4 page is rendered at true 300 DPI and stored as a
+            // high-quality JPEG. Only one page's raster is kept in memory
+            // at a time, so large jobs (including ~40 pages) remain manageable.
             let pdf = null;
             try {
                 showLoading('प्रिन्ट PDF तैयार हो रही है...');
+
                 const { jsPDF } = window.jspdf;
                 const totalPages = getTotalPages();
+
                 pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'mm',
@@ -1801,45 +1804,61 @@
                     compress: true
                 });
 
-                // A4 print raster. 150 DPI is more than adequate for normal
-                // photo printing while using roughly one quarter of the pixels
-                // of the previous high-resolution path.
-                const PRINT_W = 1240;
-                const PRINT_H = 1754;
+                // A4 at 300 DPI = 2480 × 3508 pixels.
+                // The old print path captured at 96 DPI and then enlarged it
+                // to 1240 × 1754, which permanently reduced fine text/detail.
+                const PRINT_W = 2480;
+                const PRINT_H = 3508;
+                const PRINT_SCALE = 300 / 96;
+                const JPEG_QUALITY = 0.92;
 
                 for (let p = 1; p <= totalPages; p++) {
-                    const sourceCanvas = await capturePageAsCanvasSilent(p, 1.0);
+                    showLoading(`प्रिन्ट PDF तैयार हो रही है... पेज ${p} / ${totalPages}`);
 
-                    // Resize into a bounded canvas so jsPDF never receives the
-                    // larger html2canvas RGBA buffer.
-                    const pageCanvas = document.createElement('canvas');
-                    pageCanvas.width = PRINT_W;
-                    pageCanvas.height = PRINT_H;
-                    const pageCtx = pageCanvas.getContext('2d', { alpha: false });
-                    pageCtx.fillStyle = '#ffffff';
-                    pageCtx.fillRect(0, 0, PRINT_W, PRINT_H);
-                    pageCtx.drawImage(sourceCanvas, 0, 0, PRINT_W, PRINT_H);
+                    // Capture directly at 300 DPI. Do NOT first capture a
+                    // low-resolution page and enlarge it.
+                    const pageCanvas = await capturePageAsCanvasSilent(p, PRINT_SCALE);
 
-                    // Convert only this page to a compressed JPEG.
-                    const jpegData = pageCanvas.toDataURL('image/jpeg', 0.72);
+                    // html2canvas uses CSS pixels; ensure the resulting canvas
+                    // is exactly the A4 300-DPI raster expected by the printer.
+                    let finalCanvas = pageCanvas;
+
+                    if (pageCanvas.width !== PRINT_W || pageCanvas.height !== PRINT_H) {
+                        finalCanvas = document.createElement('canvas');
+                        finalCanvas.width = PRINT_W;
+                        finalCanvas.height = PRINT_H;
+
+                        const finalCtx = finalCanvas.getContext('2d', { alpha: false });
+                        finalCtx.imageSmoothingEnabled = true;
+                        finalCtx.imageSmoothingQuality = 'high';
+                        finalCtx.fillStyle = '#ffffff';
+                        finalCtx.fillRect(0, 0, PRINT_W, PRINT_H);
+                        finalCtx.drawImage(pageCanvas, 0, 0, PRINT_W, PRINT_H);
+                    }
+
+                    // High-quality JPEG keeps text/lines much sharper than the
+                    // previous 0.72 JPEG setting while remaining considerably
+                    // faster and smaller than PNG for a 40-page print job.
+                    const jpegData = finalCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
 
                     if (p > 1) pdf.addPage('a4', 'p');
                     pdf.addImage(jpegData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
 
-                    // Release both raster buffers immediately.
-                    sourceCanvas.width = 1;
-                    sourceCanvas.height = 1;
+                    // Release this page immediately before processing the next.
                     pageCanvas.width = 1;
                     pageCanvas.height = 1;
 
-                    // Let Chrome process pending cleanup before the next page.
-                    await new Promise(resolve => setTimeout(resolve, 25));
+                    if (finalCanvas !== pageCanvas) {
+                        finalCanvas.width = 1;
+                        finalCanvas.height = 1;
+                    }
+
+                    // Small yield keeps Chrome responsive during long print jobs.
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
                 hideLoading();
 
-                // Open the completed PDF as a Blob. Only the compressed PDF is
-                // handed to Chrome; the temporary page canvases are already gone.
                 const pdfBlob = pdf.output('blob');
                 pdf = null;
                 const pdfUrl = URL.createObjectURL(pdfBlob);
