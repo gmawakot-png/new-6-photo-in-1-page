@@ -159,19 +159,39 @@
         .free-layout .photo-card, .free-layout .photo-container, .free-layout .img-wrapper { overflow: visible !important; }
 
         /* RESIZE HANDLES */
+        /* Hit-area (bigger, invisible) so the small red dot is much easier to
+           grab precisely — this is what fixes "sometimes it grabs the whole
+           photo (hand) instead of resizing". The visible red dot itself stays
+           the same small size, drawn via ::after so it doesn't change how it looks. */
         .resize-handle {
             position: absolute;
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            z-index: 30;
+            display: block;
+            cursor: pointer;
+        }
+        .resize-handle::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
             width: 14px;
             height: 14px;
             background: #ff5722;
             border: 2px solid #ffffff;
             border-radius: 50%;
-            z-index: 30;
-            display: block;
             box-shadow: 0 0 8px rgba(0,0,0,0.9);
-            cursor: pointer;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
         }
-        
+        .resize-handle:hover::after {
+            transform: translate(-50%, -50%) scale(1.25);
+        }
+
         .handle-tl { left: 0; top: 0; cursor: nwse-resize; }
         .handle-tr { left: 100%; top: 0; cursor: nesw-resize; }
         .handle-bl { left: 0; top: 100%; cursor: nesw-resize; }
@@ -213,14 +233,11 @@
         .a4-preview-grid:not(.free-layout) .img-wrapper { width:100%!important; height:100%!important; max-width:none!important; max-height:none!important; }
         .a4-preview-grid:not(.free-layout) .img-wrapper > img { width:100%!important; height:100%!important; max-width:none!important; max-height:none!important; object-fit:fill!important; }
         .resize-handle {
-            width: 14px;
-            height: 14px;
+            width: 28px;
+            height: 28px;
             margin: 0;
             pointer-events: auto;
             transform: translate(-50%, -50%);
-        }
-        .resize-handle:hover {
-            transform: translate(-50%, -50%) scale(1.15);
         }
         #sidebarPhotoSize { display: block; font-size: 11px; color: #00ffcc; font-weight: bold; margin: 2px 0 6px; text-align: center; }
 
@@ -350,7 +367,7 @@
             border: 2px dashed #007bff;
             background: #ffffff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            padding: 8mm;
+            padding: 10mm; /* default; JS applies user Margin T/B/L/R */
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
@@ -711,6 +728,9 @@
         .img-wrapper { position: relative !important; overflow: visible !important; }
         .img-wrapper .resize-handle { z-index: 9999 !important; pointer-events: auto !important; }
         .photo-card { overflow: visible !important; }
+        /* Red corner/edge dots (resize-handle) sirf tab dikhein jab photo select ho (click par) */
+        .photo-card .resize-handle { display: none !important; }
+        .photo-card.selected-photo .resize-handle { display: block !important; }
 
     @page { size: A4 portrait; margin: 0; }
     </style>
@@ -728,6 +748,19 @@
                 <div class="control-group">
                     <input type="file" id="photoInput" multiple accept="image/*,.pdf" class="custom-file-input">
                 </div>
+                <div class="control-group" style="background: #dbeafe; padding: 1px 4px; border-radius: 4px;" title="नई फोटो कहाँ जाए">
+                    <select id="uploadTargetSelect" style="width:auto; min-width:88px; padding:2px 3px; font-size:11px; font-weight:bold;">
+                        <option value="current">📄 इस पेज</option>
+                        <option value="new">📄 नया पेज</option>
+                    </select>
+                </div>
+                <div class="control-group" style="background: #fef3c7; padding: 1px 4px; border-radius: 4px; gap:2px;" title="प्रिंट मार्जिन mm (T ऊपर, B नीचे, L बाएँ, R दाएँ)">
+                    <label style="color:#92400e; font-weight:bold; font-size:11px;">Mrg</label>
+                    <input type="number" id="marginTopInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="ऊपर mm">
+                    <input type="number" id="marginBottomInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="नीचे mm">
+                    <input type="number" id="marginLeftInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="बाएँ mm">
+                    <input type="number" id="marginRightInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="दाएँ mm">
+                </div>
                 <div class="control-group" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
                     <label for="rowsInput" style="color: #0f172a;" title="Rows for current page">Page Rows:</label>
                     <input type="number" id="rowsInput" min="1" max="10" value="3">
@@ -738,6 +771,7 @@
                 </div>
                 <div class="control-group">
                     <button id="gridArrangeBtn" title="Grid ON/OFF: current page only">▦ Grid: ON</button>
+                    <button id="fillPageBtn" type="button" title="इस पेज की फोटो को पूरे प्रिंट एरिया में फैलाएँ (1 फोटो = पूरा पेज)" style="background:#0d9488;">📄 Fill Page</button>
                 </div>
                 <div class="control-group">
                     <label for="gapInput">Gap:</label>
@@ -746,7 +780,7 @@
                 <div class="control-group">
                     <label for="borderWidthInput">Border:</label>
                     <input type="number" id="borderWidthInput" min="0" max="10" value="1">px
-                    <input type="color" id="borderColorInput" value="#cccccc" style="width:24px; height:22px; border:none; cursor:pointer; padding:0;">
+                    <input type="color" id="borderColorInput" value="#000000" style="width:24px; height:22px; border:none; cursor:pointer; padding:0;">
                 </div>
                 <div class="control-group">
                     <label for="resizeSlider">All Zoom: <span id="zoomVal">100</span>%</label>
@@ -1013,6 +1047,11 @@
 
     <script>
         const photoInput = document.getElementById('photoInput');
+        const uploadTargetSelect = document.getElementById('uploadTargetSelect');
+        const marginTopInput = document.getElementById('marginTopInput');
+        const marginBottomInput = document.getElementById('marginBottomInput');
+        const marginLeftInput = document.getElementById('marginLeftInput');
+        const marginRightInput = document.getElementById('marginRightInput');
         const rowsInput = document.getElementById('rowsInput');
         const columnsInput = document.getElementById('columnsInput');
         const gapInput = document.getElementById('gapInput');
@@ -1044,6 +1083,69 @@
         const printAreaContainer = document.getElementById('printAreaContainer');
         const loadingModal = document.getElementById('loadingModal');
         const loadingText = document.getElementById('loadingText');
+
+        // Print / preview margins in mm (user controllable)
+        function getPrintMargins() {
+            const clamp = (v, def) => {
+                const n = parseFloat(v);
+                if (!Number.isFinite(n) || n < 0) return def;
+                return Math.min(30, n);
+            };
+            return {
+                top: clamp(marginTopInput && marginTopInput.value, 5),
+                bottom: clamp(marginBottomInput && marginBottomInput.value, 5),
+                left: clamp(marginLeftInput && marginLeftInput.value, 5),
+                right: clamp(marginRightInput && marginRightInput.value, 5)
+            };
+        }
+
+        function applyPreviewMargins() {
+            const m = getPrintMargins();
+            if (a4Preview) {
+                a4Preview.style.padding = `${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm`;
+            }
+        }
+
+        // After a rotate swaps width↔height, freeX/freeY (top-left) can push the
+        // photo's new, differently-shaped box past the page's right/bottom edge —
+        // visually it then overlaps the next page below. Pull it back inside.
+        function clampFreePositionToPage(p) {
+            if (!p) return;
+            const m = getPrintMargins();
+            const PX_PER_MM = 96 / 25.4;
+            const contentW = (210 - m.left - m.right) * PX_PER_MM;
+            const contentH = (297 - m.top - m.bottom) * PX_PER_MM;
+            const f = p.unit === 'inch' ? 96 : 37.8;
+            let w = 0, h = 0;
+            if (Number(p.pullW) > 0 && Number(p.pullH) > 0) {
+                w = Number(p.pullW); h = Number(p.pullH);
+            } else if (Number(p.freeWidth) > 0 && Number(p.freeHeight) > 0) {
+                w = Number(p.freeWidth) * f; h = Number(p.freeHeight) * f;
+            } else if (Number(p.customWidth) > 0 && Number(p.customHeight) > 0) {
+                w = Number(p.customWidth) * f; h = Number(p.customHeight) * f;
+            }
+            if (w <= 0 || h <= 0) return;
+            const maxX = Math.max(0, contentW - w);
+            const maxY = Math.max(0, contentH - h);
+            p.freeX = Math.min(Math.max(0, Number(p.freeX) || 0), maxX);
+            p.freeY = Math.min(Math.max(0, Number(p.freeY) || 0), maxY);
+        }
+
+        function onMarginChange() {
+            applyPreviewMargins();
+            // free-layout content area changes with margins — refresh so positions stay sensible
+            if (typeof refreshAll === 'function') {
+                try { refreshAll(); } catch (e) {}
+            }
+        }
+        [marginTopInput, marginBottomInput, marginLeftInput, marginRightInput].forEach(el => {
+            if (el) {
+                el.addEventListener('change', onMarginChange);
+                el.addEventListener('input', () => applyPreviewMargins());
+            }
+        });
+        // initial
+        setTimeout(applyPreviewMargins, 0);
 
         // A4 Actual Size screen preview is isolated from photo/layout data.
         const a4ActualSizeBtn = document.getElementById('a4ActualSizeBtn');
@@ -1501,11 +1603,32 @@
             }
             
             try { photoInput.value = ''; } catch(err) {}
+
+            // Upload target: "इस पेज पर" = current, "नए पेज पर" = next empty/new page
+            const uploadMode = (uploadTargetSelect && uploadTargetSelect.value) || 'current';
             let targetPage = Math.max(1, currentPage);
+            if (uploadMode === 'new') {
+                // हमेशा एक नया पेज बनाकर उसी पर डालें
+                targetPage = Math.max(1, getTotalPages()) + 1;
+                getPageConfig(targetPage); // ensure config exists
+                // current page layout copy if available
+                const prevCfg = getPageConfig(currentPage);
+                const cfgNew = getPageConfig(targetPage);
+                if (!cfgNew.layoutCustomized) {
+                    cfgNew.rows = prevCfg.rows;
+                    cfgNew.cols = prevCfg.cols;
+                    cfgNew.gap = prevCfg.gap;
+                    cfgNew.free = prevCfg.free;
+                }
+                currentPage = targetPage;
+            }
+
             let usedOnPage = getPagePhotoIndices(targetPage).length;
             for (const np of newPhotos) {
                 let cfg = getPageConfig(targetPage);
-                if (!cfg.free) {
+                // free layout: इस पेज पर ही रखो (जब तक user ने "नए पेज" न चुना हो)
+                // grid layout: capacity भरने पर अगला पेज
+                if (!cfg.free && uploadMode === 'current') {
                     const capacity = Math.max(1, (cfg.rows || 1) * (cfg.cols || 1));
                     if (usedOnPage >= capacity) {
                         const previousPageConfig = {
@@ -1518,9 +1641,6 @@
                         targetPage++;
                         usedOnPage = 0;
 
-                        // नई/खाली और manually customized न की गई page पर
-                        // पिछली page का वही layout लागू करें। इससे 1x1, 2x3 आदि
-                        // में bulk upload करने पर सभी नई pages उसी format में रहेंगी।
                         cfg = getPageConfig(targetPage);
                         if (getPagePhotoIndices(targetPage).length === 0 && !cfg.layoutCustomized) {
                             cfg.rows = previousPageConfig.rows;
@@ -1725,11 +1845,41 @@
             if (a4ActualSizeMode) applyA4ActualSizeMode();
         });
 
-        rotateAllBtn.addEventListener('click', () => {
+        rotateAllBtn.addEventListener('click', async () => {
             saveStateToHistory();
-            photos.forEach(p => { 
-                if (!p.isBlank) p.rotation = (p.rotation + 90) % 360; 
-            });
+            for (const p of photos) {
+                if (p.isBlank) continue;
+                const pageNum = p.page || 1;
+                const pageIsFreeNow = !!(pageConfigs[pageNum] && pageConfigs[pageNum].free);
+                const hasSize = (Number(p.customWidth) > 0 && Number(p.customHeight) > 0) ||
+                               (Number(p.freeWidth) > 0 && Number(p.freeHeight) > 0) ||
+                               (Number(p.pullW) > 0 && Number(p.pullH) > 0);
+                if (pageIsFreeNow || hasSize) {
+                    try {
+                        const baked = await getRotatedImageUrl(p.url, 90);
+                        p.url = baked;
+                        p.rotation = 0;
+                        const swapPair = (a, b) => {
+                            if (Number(p[a]) > 0 && Number(p[b]) > 0) {
+                                const t = p[a]; p[a] = p[b]; p[b] = t;
+                            }
+                        };
+                        swapPair('freeWidth', 'freeHeight');
+                        swapPair('customWidth', 'customHeight');
+                        swapPair('pullW', 'pullH');
+                        clampFreePositionToPage(p);
+                        if (p.originalWidth && p.originalHeight) {
+                            const tw = p.originalWidth;
+                            p.originalWidth = p.originalHeight;
+                            p.originalHeight = tw;
+                        }
+                    } catch (err) {
+                        p.rotation = (Number(p.rotation || 0) + 90) % 360;
+                    }
+                } else {
+                    p.rotation = (Number(p.rotation || 0) + 90) % 360;
+                }
+            }
             refreshAll();
         });
 
@@ -1742,130 +1892,126 @@
             if (currentPage < total) { currentPage++; refreshAll(); }
         });
 
+        // PERFORMANCE: decoded-image cache so the same photo is never re-decoded
+        // twice across pages/print/download in one session. Key = photo.url
+        // (a fresh data-URL is generated automatically whenever a photo is
+        // edited, so the cache always stays correct on its own).
+        const __decodedImgCache = new Map();
+
+        // Pure-canvas print: no html2canvas layout bugs. Sizes match freeWidth/pullW exactly.
         async function capturePageAsCanvasSilent(pageIdx, renderScale = 300 / 96) {
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '0px';
-            tempContainer.style.width = '210mm';
-            tempContainer.style.height = '297mm';
-            tempContainer.style.backgroundColor = '#ffffff';
-            tempContainer.style.padding = '8mm'; // 8mm Safe margin for print centering
-            tempContainer.style.boxSizing = 'border-box';
-            tempContainer.style.overflow = 'hidden';
+            const m = getPrintMargins();
+            const PX_PER_MM = 96 / 25.4;
+            const s = renderScale;
+            const outW = Math.round(210 * PX_PER_MM * s);
+            const outH = Math.round(297 * PX_PER_MM * s);
+            const padL = m.left * PX_PER_MM * s;
+            const padT = m.top * PX_PER_MM * s;
+            const padR = m.right * PX_PER_MM * s;
+            const padB = m.bottom * PX_PER_MM * s;
+            const contentW = Math.max(1, outW - padL - padR);
+            const contentH = Math.max(1, outH - padT - padB);
 
-            if (pageModes[pageIdx] === 'bw') tempContainer.classList.add('mode-bw');
-
-            const grid = document.createElement('div');
-            grid.className = 'a4-preview-grid';
+            const canvas = document.createElement('canvas');
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outW, outH);
 
             const cfg = getPageConfig(pageIdx);
             const indices = getPagePhotoIndices(pageIdx);
-            if (cfg.free) {
-                grid.classList.add('free-layout');
-                grid.style.position = 'relative';
-                grid.style.display = 'block';
-            } else {
-                grid.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
-                grid.style.gridTemplateRows = `repeat(${cfg.rows}, 1fr)`;
-                grid.style.gap = `${cfg.gap}px`;
-            }
+            const factor = 37.8; // cm → CSS px at 96dpi
+            const isBw = pageModes[pageIdx] === 'bw';
+            const borderW = parseFloat(borderWidthInput && borderWidthInput.value) || 0;
+            const borderColor = (borderColorInput && borderColorInput.value) || '#000000';
 
-            indices.forEach((globalIndex) => {
-                const photoObj = photos[globalIndex];
-                if (!photoObj) return;
-                const card = createPhotoCardElement(photoObj, globalIndex, pageIdx, true);
-                grid.appendChild(card);
-            });
-
-            tempContainer.appendChild(grid);
-            document.body.appendChild(tempContainer);
-
-            const printCards = tempContainer.querySelectorAll('.photo-card');
-            printCards.forEach(card => {
-                const idx = card.dataset.index;
-                if (idx !== undefined && photos[idx]) {
-                    const photoObj = photos[idx];
-                    const container = card.querySelector('.photo-container');
-                    const imgWrapper = card.querySelector('.img-wrapper');
-                    const img = card.querySelector('img');
-                    if (container && imgWrapper && img && photoObj.fitMode === 'stretch') {
-                        const cw = container.clientWidth || container.getBoundingClientRect().width;
-                        const ch = container.clientHeight || container.getBoundingClientRect().height;
-                        const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
-                        const quarterTurn = rot === 90 || rot === 270;
-                        const level = Math.min(2, Math.max(0, Number(photoObj.stretchLevel) || 0));
-                        const scale = [1, 0.9, 0.8][level];
-
-                        imgWrapper.style.setProperty('width', '100%', 'important');
-                        imgWrapper.style.setProperty('height', '100%', 'important');
-                        imgWrapper.style.setProperty('max-width', 'none', 'important');
-                        imgWrapper.style.setProperty('max-height', 'none', 'important');
-                        imgWrapper.style.setProperty('overflow', 'visible', 'important');
-                        imgWrapper.style.setProperty('position', 'relative', 'important');
-
-                        img.style.setProperty('position', 'absolute', 'important');
-                        img.style.setProperty('left', '50%', 'important');
-                        img.style.setProperty('top', '50%', 'important');
-                        img.style.setProperty('display', 'block', 'important');
-                        img.style.setProperty('box-sizing', 'border-box', 'important');
-                        img.style.setProperty('max-width', 'none', 'important');
-                        img.style.setProperty('max-height', 'none', 'important');
-                        img.style.setProperty('object-fit', 'fill', 'important');
-                        img.style.setProperty('transform-origin', 'center center', 'important');
-
-                        if (cw > 0 && ch > 0) {
-                            if (quarterTurn) {
-                                img.style.setProperty('width', `${ch}px`, 'important');
-                                img.style.setProperty('height', `${cw}px`, 'important');
-                            } else {
-                                img.style.setProperty('width', `${cw}px`, 'important');
-                                img.style.setProperty('height', `${ch}px`, 'important');
-                            }
-                        }
-                        img.style.setProperty('transform', `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`, 'important');
-                    }
-                }
-            });
-
-            const images = tempContainer.querySelectorAll('img');
-            const loadPromises = Array.from(images).map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve;
+            const loadImg = (url) => {
+                if (!url) return Promise.resolve(null);
+                if (__decodedImgCache.has(url)) return Promise.resolve(__decodedImgCache.get(url));
+                return new Promise((resolve) => {
+                    const im = new Image();
+                    im.crossOrigin = 'anonymous';
+                    im.onload = () => { __decodedImgCache.set(url, im); resolve(im); };
+                    im.onerror = () => resolve(null);
+                    im.src = url;
                 });
-            });
-            await Promise.all(loadPromises);
+            };
 
-            try {
-                const canvas = await html2canvas(tempContainer, { 
-                    scale: renderScale, 
-                    backgroundColor: '#ffffff', 
-                    useCORS: true,
-                    allowTaint: true,
-                    logging: false 
-                });
-                
-                if (pageModes[pageIdx] === 'bw') {
-                    const ctx = canvas.getContext('2d');
-                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const d = imgData.data;
-                    for (let i = 0; i < d.length; i += 4) {
-                        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                        d[i]     = gray;
-                        d[i + 1] = gray;
-                        d[i + 2] = gray;
+            for (let i = 0; i < indices.length; i++) {
+                const p = photos[indices[i]];
+                if (!p || p.isBlank) continue;
+                const im = await loadImg(p.url);
+                if (!im) continue;
+
+                let x, y, w, h;
+                if (cfg.free) {
+                    const f = p.unit === 'inch' ? 96 : factor;
+                    if (Number(p.pullW) > 0 && Number(p.pullH) > 0) {
+                        w = Number(p.pullW) * s;
+                        h = Number(p.pullH) * s;
+                    } else if (Number(p.customWidth) > 0 && Number(p.customHeight) > 0) {
+                        w = Number(p.customWidth) * f * s;
+                        h = Number(p.customHeight) * f * s;
+                    } else if (Number(p.freeWidth) > 0 && Number(p.freeHeight) > 0) {
+                        w = Number(p.freeWidth) * f * s;
+                        h = Number(p.freeHeight) * f * s;
+                    } else {
+                        w = 10 * factor * s;
+                        h = 7 * factor * s;
                     }
-                    ctx.putImageData(imgData, 0, 0);
+                    x = padL + (Number(p.freeX) || 0) * s;
+                    y = padT + (Number(p.freeY) || 0) * s;
+                    // Fill Page / near-full → snap to exact printable area
+                    if (w >= contentW * 0.85 && h >= contentH * 0.85) {
+                        x = padL; y = padT; w = contentW; h = contentH;
+                    }
+                } else {
+                    const cols = Math.max(1, cfg.cols || 1);
+                    const rows = Math.max(1, cfg.rows || 1);
+                    const gap = (cfg.gap || 0) * s;
+                    const cellW = (contentW - gap * (cols - 1)) / cols;
+                    const cellH = (contentH - gap * (rows - 1)) / rows;
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    x = padL + col * (cellW + gap);
+                    y = padT + row * (cellH + gap);
+                    w = cellW;
+                    h = cellH;
                 }
 
-                document.body.removeChild(tempContainer);
-                return canvas;
-            } catch (err) {
-                if (tempContainer.parentNode) document.body.removeChild(tempContainer);
-                throw err;
+                const rot = ((Number(p.rotation) || 0) % 360 + 360) % 360;
+                const bright = Number(p.brightness) || 100;
+                let filter = '';
+                if (bright !== 100) filter += `brightness(${bright}%) `;
+                if (isBw) filter += 'grayscale(100%) ';
+                ctx.save();
+                if (filter) ctx.filter = filter.trim();
+
+                if (rot === 0) {
+                    ctx.drawImage(im, x, y, w, h);
+                } else {
+                    ctx.translate(x + w / 2, y + h / 2);
+                    ctx.rotate(rot * Math.PI / 180);
+                    if (rot === 90 || rot === 270) {
+                        ctx.drawImage(im, -h / 2, -w / 2, h, w);
+                    } else {
+                        ctx.drawImage(im, -w / 2, -h / 2, w, h);
+                    }
+                }
+                ctx.restore();
+
+                if (borderW > 0) {
+                    ctx.save();
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = Math.max(1, borderW * s);
+                    ctx.strokeRect(x, y, w, h);
+                    ctx.restore();
+                }
             }
+            return canvas;
         }
 
         downloadCurrentButton.addEventListener('click', async () => {
@@ -1873,7 +2019,8 @@
                 showLoading(`पेज ${currentPage} डाउनलोड हो रहा है...`);
                 setTimeout(async () => {
                     const canvas = await capturePageAsCanvasSilent(currentPage);
-                    triggerBrowserDownload(canvas.toDataURL('image/png'), `page-${currentPage}.png`);
+                    // JPEG encode is far faster than PNG at 300 DPI with no visible quality loss for photos.
+                    triggerBrowserDownload(canvas.toDataURL('image/jpeg', 0.95), `page-${currentPage}.jpg`);
                     hideLoading();
                 }, 100);
             } catch(e) {
@@ -1977,12 +2124,18 @@
 
         downloadButton.addEventListener('click', async () => {
             try {
-                showLoading("सभी PNGs डाउनलोड हो रही हैं...");
+                showLoading("सभी पेज डाउनलोड हो रहे हैं...");
                 const totalPages = getTotalPages();
 
                 for (let p = 1; p <= totalPages; p++) {
+                    showLoading(`सभी पेज डाउनलोड हो रहे हैं... पेज ${p} / ${totalPages}`);
                     const canvas = await capturePageAsCanvasSilent(p);
-                    triggerBrowserDownload(canvas.toDataURL('image/png'), `page-${p}.png`);
+                    // JPEG encode is far faster than PNG at 300 DPI with no visible quality loss for photos.
+                    triggerBrowserDownload(canvas.toDataURL('image/jpeg', 0.95), `page-${p}.jpg`);
+                    canvas.width = 1;
+                    canvas.height = 1;
+                    // keep the tab responsive on large multi-page jobs
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
                 hideLoading();
             } catch(e) {
@@ -2000,10 +2153,14 @@
                     const totalPages = getTotalPages();
 
                     for (let p = 1; p <= totalPages; p++) {
+                        showLoading(`PDF तैयार हो रही है... पेज ${p} / ${totalPages}`);
                         const canvas = await capturePageAsCanvasSilent(p);
                         const imgData = canvas.toDataURL('image/jpeg', 0.95);
                         if (p > 1) pdf.addPage();
-                        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+                        canvas.width = 1;
+                        canvas.height = 1;
+                        await new Promise(resolve => setTimeout(resolve, 10));
                     }
 
                     pdf.save('photos-output.pdf');
@@ -2075,12 +2232,18 @@
         preset10x7Btn.addEventListener('click', () => {
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
                 saveStateToHistory();
-                photos[activeEditingIndex].fitMode = 'custom';
-                photos[activeEditingIndex].unit = 'cm';
-                photos[activeEditingIndex].customWidth = 10;
-                photos[activeEditingIndex].customHeight = 7;
-                photos[activeEditingIndex].freeWidth = 10;
-                photos[activeEditingIndex].freeHeight = 7;
+                const p = photos[activeEditingIndex];
+                p.fitMode = 'custom';
+                p.unit = 'cm';
+                p.customWidth = 10;
+                p.customHeight = 7;
+                p.freeWidth = 10;
+                p.freeHeight = 7;
+                p.pullW = null;
+                p.pullH = null;
+                p.stretchLevel = 0;
+                // अगर पहले stretch था तो हटाओ ताकि custom size लगे
+                if (p.fitMode === 'stretch') p.fitMode = 'custom';
 
                 unitSelect.value = 'cm';
                 inputWidthVal.value = 10;
@@ -2095,12 +2258,16 @@
         preset15x12Btn.addEventListener('click', () => {
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
                 saveStateToHistory();
-                photos[activeEditingIndex].fitMode = 'custom';
-                photos[activeEditingIndex].unit = 'cm';
-                photos[activeEditingIndex].customWidth = 15;
-                photos[activeEditingIndex].customHeight = 12;
-                photos[activeEditingIndex].freeWidth = 15;
-                photos[activeEditingIndex].freeHeight = 12;
+                const p = photos[activeEditingIndex];
+                p.fitMode = 'custom';
+                p.unit = 'cm';
+                p.customWidth = 15;
+                p.customHeight = 12;
+                p.freeWidth = 15;
+                p.freeHeight = 12;
+                p.pullW = null;
+                p.pullH = null;
+                p.stretchLevel = 0;
 
                 unitSelect.value = 'cm';
                 inputWidthVal.value = 15;
@@ -2115,12 +2282,16 @@
         preset28x20Btn.addEventListener('click', () => {
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
                 saveStateToHistory();
-                photos[activeEditingIndex].fitMode = 'custom';
-                photos[activeEditingIndex].unit = 'cm';
-                photos[activeEditingIndex].customWidth = 28;
-                photos[activeEditingIndex].customHeight = 19;
-                photos[activeEditingIndex].freeWidth = 28;
-                photos[activeEditingIndex].freeHeight = 19;
+                const p = photos[activeEditingIndex];
+                p.fitMode = 'custom';
+                p.unit = 'cm';
+                p.customWidth = 28;
+                p.customHeight = 19;
+                p.freeWidth = 28;
+                p.freeHeight = 19;
+                p.pullW = null;
+                p.pullH = null;
+                p.stretchLevel = 0;
 
                 unitSelect.value = 'cm';
                 inputWidthVal.value = 28;
@@ -2177,20 +2348,26 @@
 
         inputWidthVal.addEventListener('input', () => {
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
-                photos[activeEditingIndex].fitMode = 'custom';
-                photos[activeEditingIndex].customWidth = parseFloat(inputWidthVal.value) || null;
-                photos[activeEditingIndex].freeWidth = photos[activeEditingIndex].customWidth;
-                photos[activeEditingIndex].unit = unitSelect.value;
+                const p = photos[activeEditingIndex];
+                p.fitMode = 'custom';
+                p.customWidth = parseFloat(inputWidthVal.value) || null;
+                p.freeWidth = p.customWidth;
+                p.unit = unitSelect.value;
+                p.pullW = null;
+                p.pullH = null;
                 refreshAll();
             }
         });
 
         inputHeightVal.addEventListener('input', () => {
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
-                photos[activeEditingIndex].fitMode = 'custom';
-                photos[activeEditingIndex].customHeight = parseFloat(inputHeightVal.value) || null;
-                photos[activeEditingIndex].freeHeight = photos[activeEditingIndex].customHeight;
-                photos[activeEditingIndex].unit = unitSelect.value;
+                const p = photos[activeEditingIndex];
+                p.fitMode = 'custom';
+                p.customHeight = parseFloat(inputHeightVal.value) || null;
+                p.freeHeight = p.customHeight;
+                p.unit = unitSelect.value;
+                p.pullW = null;
+                p.pullH = null;
                 refreshAll();
             }
         });
@@ -2778,6 +2955,7 @@
 
                 updateGridLayout();
                 updatePageModeControls();
+                applyPreviewMargins();
 
                 if (pageModes[currentPage] === 'bw') {
                     a4Preview.classList.add('mode-bw');
@@ -2988,15 +3166,30 @@
 
                     const startX = e.clientX;
                     const startY = e.clientY;
+                    // getBoundingClientRect = screen pixels (already scaled by A4 transform).
+                    // Convert to unscaled CSS px of the 210mm page, else print becomes tiny.
+                    const scale = (typeof currentScale === 'number' && currentScale > 0.05) ? currentScale : 1;
                     const startRect = img.getBoundingClientRect();
-                    const startWidth = Math.max(20, startRect.width);
-                    const startHeight = Math.max(20, startRect.height);
+                    let startWidth = Math.max(20, startRect.width / scale);
+                    let startHeight = Math.max(20, startRect.height / scale);
+                    if (photoObj.fitMode === 'manual_pull' && Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0) {
+                        startWidth = Number(photoObj.pullW);
+                        startHeight = Number(photoObj.pullH);
+                    } else if (Number(photoObj.freeWidth) > 0 && Number(photoObj.freeHeight) > 0) {
+                        const f = photoObj.unit === 'inch' ? 96 : 37.8;
+                        startWidth = Number(photoObj.freeWidth) * f;
+                        startHeight = Number(photoObj.freeHeight) * f;
+                    } else if (Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0) {
+                        const f = photoObj.unit === 'inch' ? 96 : 37.8;
+                        startWidth = Number(photoObj.customWidth) * f;
+                        startHeight = Number(photoObj.customHeight) * f;
+                    }
 
                     function doDrag(me) {
                         me.preventDefault();
 
-                        const dx = (me.clientX - startX) / currentScale;
-                        const dy = (me.clientY - startY) / currentScale;
+                        const dx = (me.clientX - startX) / scale;
+                        const dy = (me.clientY - startY) / scale;
 
                         let newW = startWidth;
                         let newH = startHeight;
@@ -3013,6 +3206,8 @@
                         photoObj.pullH = newH;
                         photoObj.freeWidth = newW / (photoObj.unit === 'inch' ? 96 : 37.8);
                         photoObj.freeHeight = newH / (photoObj.unit === 'inch' ? 96 : 37.8);
+                        photoObj.customWidth = photoObj.freeWidth;
+                        photoObj.customHeight = photoObj.freeHeight;
                         photoObj.fitMode = 'manual_pull';
 
                         if (pageConfigs[photoObj.page || currentPage]?.free) {
@@ -3150,6 +3345,70 @@
             refreshAll();
         });
 
+        // 1 फोटो = पूरा प्रिंट पेज (मार्जिन के अंदर)
+        document.getElementById('fillPageBtn').addEventListener('click', () => {
+            saveStateToHistory();
+            const page = currentPage;
+            const cfg = getPageConfig(page);
+            const m = getPrintMargins();
+            // Printable area in cm (A4 21×29.7 cm minus margins)
+            const contentWcm = Math.max(1, (210 - m.left - m.right) / 10);
+            const contentHcm = Math.max(1, (297 - m.top - m.bottom) / 10);
+            const indices = getPagePhotoIndices(page);
+
+            if (indices.length === 0) {
+                alert('इस पेज पर कोई फोटो नहीं है।');
+                return;
+            }
+
+            // Grid OFF + single photo fills whole content box
+            cfg.free = true;
+            cfg.rows = 1;
+            cfg.cols = 1;
+
+            indices.forEach((idx, i) => {
+                const p = photos[idx];
+                if (!p || p.isBlank) return;
+                p.unit = 'cm';
+                p.fitMode = 'custom';
+                p.pullW = null;
+                p.pullH = null;
+                p.stretchLevel = 0;
+                p.offsetX = 0;
+                p.offsetY = 0;
+                if (indices.length === 1) {
+                    // एक फोटो → पूरा प्रिंट एरिया (px भी सेट ताकि print/path दोनों मिलें)
+                    const pxW = contentWcm * 37.8;
+                    const pxH = contentHcm * 37.8;
+                    p.customWidth = contentWcm;
+                    p.customHeight = contentHcm;
+                    p.freeWidth = contentWcm;
+                    p.freeHeight = contentHcm;
+                    p.pullW = pxW;
+                    p.pullH = pxH;
+                    p.fitMode = 'manual_pull';
+                    p.freeX = 0;
+                    p.freeY = 0;
+                } else {
+                    // कई फोटो: बराबर बांटें (2 कॉलम)
+                    const cols = Math.min(2, indices.length);
+                    const rows = Math.ceil(indices.length / cols);
+                    const gapCm = 0.3;
+                    const cellW = (contentWcm - gapCm * (cols - 1)) / cols;
+                    const cellH = (contentHcm - gapCm * (rows - 1)) / rows;
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    p.customWidth = cellW;
+                    p.customHeight = cellH;
+                    p.freeWidth = cellW;
+                    p.freeHeight = cellH;
+                    p.freeX = col * (cellW + gapCm) * 37.8;
+                    p.freeY = row * (cellH + gapCm) * 37.8;
+                }
+            });
+            refreshAll();
+        });
+
         applySizeAllBtn.addEventListener('click', () => {
             if (selectedPhotoIndex === null || !photos[selectedPhotoIndex]) return;
             const w=parseFloat(inputWidthVal.value), h=parseFloat(inputHeightVal.value), u=unitSelect.value;
@@ -3275,7 +3534,9 @@
             img.src = photoObj.url;
             img.alt = photoObj.name || 'Photo';
             
-            const globalZoom = parseInt(resizeSlider.value) / 100;
+            // CRITICAL: Print must ignore screen "All Zoom". Zoom is preview-only.
+            // Using screen zoom in print makes free-layout sizes wrong after rotate/straighten/fit.
+            const globalZoom = isPrint ? 1 : (parseInt(resizeSlider.value) / 100 || 1);
             const hasCustomSize = Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0;
             const hasManualSize = photoObj.fitMode === 'manual_pull' && Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0;
             const factor = photoObj.unit === 'inch' ? 96 : 37.8;
@@ -3328,9 +3589,16 @@
             }
 
             if (pageIsFree && savedW && savedH) {
-                const quarterTurn = Math.abs(Number(photoObj.rotation) % 180) === 90;
-                const displayW = (photoObj.fitMode === 'stretch' && quarterTurn) ? savedH : savedW;
-                const displayH = (photoObj.fitMode === 'stretch' && quarterTurn) ? savedW : savedH;
+                const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                const quarterTurn = (rot === 90 || rot === 270);
+                // Card size was already swapped for isPrint+stretch+90/270 above.
+                // Image box must match the final card box so print fills exactly like screen.
+                let displayW = savedW;
+                let displayH = savedH;
+                if (photoObj.fitMode === 'stretch' && quarterTurn && !isPrint) {
+                    displayW = savedH;
+                    displayH = savedW;
+                }
                 imgWrapper.style.setProperty('width', `${displayW * globalZoom}px`, 'important');
                 imgWrapper.style.setProperty('height', `${displayH * globalZoom}px`, 'important');
                 imgWrapper.style.setProperty('max-width', 'none', 'important');
@@ -3434,7 +3702,7 @@
 
                 const dragTarget = pageIsFree ? imgWrapper : container;
                 dragTarget.addEventListener('mousedown', (e) => {
-                    if (e.target.classList.contains('resize-handle') || e.target.closest('.photo-toolbar')) return;
+                    if (e.target.closest('.resize-handle') || e.target.closest('.photo-toolbar')) return;
                     
                     e.preventDefault();
                     isDraggingPhoto = true;
@@ -3598,10 +3866,47 @@
                 const rotBtn = document.createElement('button');
                 rotBtn.className = 'tool-btn';
                 rotBtn.textContent = '🔄 Rotate';
-                rotBtn.onclick = (e) => {
+                rotBtn.onclick = async (e) => {
                     e.stopPropagation();
                     saveStateToHistory();
-                    photoObj.rotation = (photoObj.rotation + 90) % 360;
+                    const nextRot = (Number(photoObj.rotation || 0) + 90) % 360;
+                    const pageIsFreeNow = !!(pageConfigs[pageNumber] && pageConfigs[pageNumber].free);
+                    const hasSize = (Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0) ||
+                                   (Number(photoObj.freeWidth) > 0 && Number(photoObj.freeHeight) > 0) ||
+                                   (Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0);
+
+                    // Free-layout या fixed size होने पर: rotation को image में bake करो
+                    // और width↔height swap करो — वरना फोटो पतली/खींची हुई दिखती है।
+                    if (pageIsFreeNow || hasSize) {
+                        try {
+                            const baked = await getRotatedImageUrl(photoObj.url, 90);
+                            photoObj.url = baked;
+                            photoObj.rotation = 0;
+                            const swapPair = (a, b) => {
+                                if (Number(photoObj[a]) > 0 && Number(photoObj[b]) > 0) {
+                                    const t = photoObj[a];
+                                    photoObj[a] = photoObj[b];
+                                    photoObj[b] = t;
+                                }
+                            };
+                            swapPair('freeWidth', 'freeHeight');
+                            swapPair('customWidth', 'customHeight');
+                            swapPair('pullW', 'pullH');
+                            clampFreePositionToPage(photoObj);
+                            if (photoObj.originalWidth && photoObj.originalHeight) {
+                                const tw = photoObj.originalWidth;
+                                photoObj.originalWidth = photoObj.originalHeight;
+                                photoObj.originalHeight = tw;
+                            }
+                        } catch (err) {
+                            photoObj.rotation = nextRot;
+                        }
+                    } else {
+                        photoObj.rotation = nextRot;
+                    }
+                    // Rotate किसी भी हालत में उसी पेज पर रखे जिस पर फोटो है —
+                    // कभी-कभी currentPage इधर-उधर हो जाता था, अब हमेशा वापस लॉक करते हैं।
+                    currentPage = pageNumber;
                     refreshAll();
                 };
 
@@ -3681,9 +3986,36 @@
                 const sizeBtn = document.createElement('button');
                 sizeBtn.className = 'tool-btn';
                 sizeBtn.textContent = '📐 Size';
-                sizeBtn.onclick = (e) => {
+                sizeBtn.onclick = async (e) => {
                     e.stopPropagation();
                     activeEditingIndex = globalIndex;
+                    // Size लगाने से पहले pending rotation bake करो ताकि साइज़ सही लगे
+                    if (Number(photoObj.rotation) !== 0) {
+                        try {
+                            const rotatedUrl = await getRotatedImageUrl(photoObj.url, photoObj.rotation);
+                            photoObj.url = rotatedUrl;
+                            const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
+                            if (rot === 90 || rot === 270) {
+                                const swapPair = (a, b) => {
+                                    if (Number(photoObj[a]) > 0 && Number(photoObj[b]) > 0) {
+                                        const t = photoObj[a]; photoObj[a] = photoObj[b]; photoObj[b] = t;
+                                    }
+                                };
+                                swapPair('freeWidth', 'freeHeight');
+                                swapPair('customWidth', 'customHeight');
+                                swapPair('pullW', 'pullH');
+                                clampFreePositionToPage(photoObj);
+                                if (photoObj.originalWidth && photoObj.originalHeight) {
+                                    const tw = photoObj.originalWidth;
+                                    photoObj.originalWidth = photoObj.originalHeight;
+                                    photoObj.originalHeight = tw;
+                                }
+                            }
+                            photoObj.rotation = 0;
+                            currentPage = pageNumber;
+                            refreshAll();
+                        } catch (err) {}
+                    }
                     sizeModalFileName.textContent = `File: ${photoObj.name || ''}`;
                     const currentUnit = photoObj.unit || 'cm';
                     unitSelect.value = currentUnit;
@@ -3699,6 +4031,9 @@
                     if (Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0) {
                         shownWidth = Number(photoObj.customWidth);
                         shownHeight = Number(photoObj.customHeight);
+                    } else if (Number(photoObj.freeWidth) > 0 && Number(photoObj.freeHeight) > 0) {
+                        shownWidth = Number(photoObj.freeWidth);
+                        shownHeight = Number(photoObj.freeHeight);
                     } else {
                         shownWidth = ref.width;
                         shownHeight = ref.height;
