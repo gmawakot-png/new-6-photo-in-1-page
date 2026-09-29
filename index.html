@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Photo Selector Pro Ultimate HD</title>
-    
+
     <!-- PDF.js Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
@@ -14,7 +14,7 @@
     <!-- html2canvas & jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <!-- Cropper.js CSS & JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -27,7 +27,7 @@
             text-align: center;
             background-color: #f4f6f9;
             height: 100vh;
-            overflow: hidden; 
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
@@ -41,7 +41,7 @@
             box-sizing: border-box;
             padding: 4px;
         }
-        
+
         .top-fixed-section {
             flex-shrink: 0;
             background: #f4f6f9;
@@ -107,7 +107,7 @@
             box-sizing: border-box;
             background: transparent !important;
         }
-        
+
         .photo-card {
             background: transparent !important;
             border: 1px dashed rgba(0, 123, 255, 0.3);
@@ -119,12 +119,12 @@
             position: relative;
             height: 100%;
             width: 100%;
-            min-height: 130px; /* Prevent toolbar collapsing */
+            min-height: 130px;
             box-sizing: border-box;
             transition: border 0.15s ease;
             box-shadow: none !important;
         }
-        
+
         .photo-container {
             position: relative;
             width: 100%;
@@ -159,10 +159,6 @@
         .free-layout .photo-card, .free-layout .photo-container, .free-layout .img-wrapper { overflow: visible !important; }
 
         /* RESIZE HANDLES */
-        /* Hit-area (bigger, invisible) so the small red dot is much easier to
-           grab precisely — this is what fixes "sometimes it grabs the whole
-           photo (hand) instead of resizing". The visible red dot itself stays
-           the same small size, drawn via ::after so it doesn't change how it looks. */
         .resize-handle {
             position: absolute;
             width: 28px;
@@ -219,7 +215,6 @@
             display: block;
             overflow: visible !important;
         }
-        /* The editing frame must always hug the actual photo area. */
         .img-wrapper {
             position: relative;
             overflow: visible !important;
@@ -241,7 +236,6 @@
         }
         #sidebarPhotoSize { display: block; font-size: 11px; color: #00ffcc; font-weight: bold; margin: 2px 0 6px; text-align: center; }
 
-        /* TOOLBAR FIX: PREVENT SHRINKING, KEEP READABLE AT ALL TIMES */
         .photo-toolbar {
             display: none !important;
             background: #0f172a;
@@ -331,7 +325,7 @@
         }
         .delete-btn { background: #dc3545; color: white; border: none; }
         .delete-btn:hover { background: #bd2130; color: white; }
-        
+
         img {
             max-width: 100%;
             max-height: 100%;
@@ -358,7 +352,7 @@
         #downloadButton { background-color: #ff5733; }
         #downloadCurrentButton { background-color: #e83e8c; }
         #downloadPdfButton { background-color: #6f42c1; }
-        
+
         .a4-preview {
             width: 210mm;
             height: 297mm;
@@ -367,7 +361,7 @@
             border: 2px dashed #007bff;
             background: #ffffff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            padding: 10mm; /* default; JS applies user Margin T/B/L/R */
+            padding: 10mm;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
@@ -575,7 +569,7 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.3);
         }
-        
+
         .persp-corner::before {
             content: '';
             position: absolute;
@@ -668,7 +662,7 @@
         .preset-btn:hover { opacity: 0.9; }
 
         #printAreaContainer { display: none; background: #fff; }
-        
+
         @media print {
             html, body { background: #fff !important; color: #000 !important; }
             body * { visibility: hidden; }
@@ -723,12 +717,10 @@
                 margin: 0 auto !important;
             }
         }
-    
-        /* FINAL PHOTO FRAME FIX: handles are always centered exactly on photo corners. */
+
         .img-wrapper { position: relative !important; overflow: visible !important; }
         .img-wrapper .resize-handle { z-index: 9999 !important; pointer-events: auto !important; }
         .photo-card { overflow: visible !important; }
-        /* Red corner/edge dots (resize-handle) sirf tab dikhein jab photo select ho (click par) */
         .photo-card .resize-handle { display: none !important; }
         .photo-card.selected-photo .resize-handle { display: block !important; }
 
@@ -743,65 +735,65 @@
                 <span id="currentPageLabel" style="font-weight: bold; font-size: 13px; color: #28a745; margin-right: 10px;">Page: 1</span>
                 <span id="totalPages" style="font-weight: bold; font-size: 13px; color: #007bff;">Total Pages: 0</span>
             </div>
-            
+
             <div class="controls">
                 <div class="control-group">
-                    <input type="file" id="photoInput" multiple accept="image/*,.pdf" class="custom-file-input">
+                    <input type="file" id="photoInput" multiple accept="image/*,.pdf" class="custom-file-input" title="फोटो या PDF फाइल चुनें (एक साथ कई फाइलें चुन सकते हैं)">
                 </div>
                 <div class="control-group" style="background: #dbeafe; padding: 1px 4px; border-radius: 4px;" title="नई फोटो कहाँ जाए">
-                    <select id="uploadTargetSelect" style="width:auto; min-width:88px; padding:2px 3px; font-size:11px; font-weight:bold;">
+                    <select id="uploadTargetSelect" style="width:auto; min-width:88px; padding:2px 3px; font-size:11px; font-weight:bold;" title="नई फोटो कहाँ जोड़ें — मौजूदा पेज पर या नए पेज पर">
                         <option value="current">📄 इस पेज</option>
                         <option value="new">📄 नया पेज</option>
                     </select>
                 </div>
                 <div class="control-group" style="background: #fef3c7; padding: 1px 4px; border-radius: 4px; gap:2px;" title="प्रिंट मार्जिन mm (T ऊपर, B नीचे, L बाएँ, R दाएँ)">
                     <label style="color:#92400e; font-weight:bold; font-size:11px;">Mrg</label>
-                    <input type="number" id="marginTopInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="ऊपर mm">
-                    <input type="number" id="marginBottomInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="नीचे mm">
-                    <input type="number" id="marginLeftInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="बाएँ mm">
-                    <input type="number" id="marginRightInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="दाएँ mm">
+                    <input type="number" id="marginTopInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="ऊपर का मार्जिन (mm में)">
+                    <input type="number" id="marginBottomInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="नीचे का मार्जिन (mm में)">
+                    <input type="number" id="marginLeftInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="बाएँ का मार्जिन (mm में)">
+                    <input type="number" id="marginRightInput" min="0" max="30" step="0.5" value="5" style="width:34px; padding:1px 2px; font-size:11px;" title="दाएँ का मार्जिन (mm में)">
                 </div>
                 <div class="control-group" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
-                    <label for="rowsInput" style="color: #0f172a;" title="Rows for current page">Page Rows:</label>
-                    <input type="number" id="rowsInput" min="1" max="10" value="3">
+                    <label for="rowsInput" style="color: #0f172a;" title="इस पेज की पंक्तियाँ">Page Rows:</label>
+                    <input type="number" id="rowsInput" min="1" max="10" value="3" title="इस पेज में कितनी पंक्तियाँ (Rows) होंगी">
                 </div>
                 <div class="control-group" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
-                    <label for="columnsInput" style="color: #0f172a;" title="Cols for current page">Page Cols:</label>
-                    <input type="number" id="columnsInput" min="1" max="10" value="2">
+                    <label for="columnsInput" style="color: #0f172a;" title="इस पेज के कॉलम">Page Cols:</label>
+                    <input type="number" id="columnsInput" min="1" max="10" value="2" title="इस पेज में कितने कॉलम (Columns) होंगे">
                 </div>
                 <div class="control-group">
-                    <button id="gridArrangeBtn" title="Grid ON/OFF: current page only">▦ Grid: ON</button>
+                    <button id="gridArrangeBtn" title="ग्रिड चालू/बंद करें — केवल इस पेज के लिए">▦ Grid: ON</button>
                     <button id="fillPageBtn" type="button" title="इस पेज की फोटो को पूरे प्रिंट एरिया में फैलाएँ (1 फोटो = पूरा पेज)" style="background:#0d9488;">📄 Fill Page</button>
                 </div>
                 <div class="control-group">
-                    <label for="gapInput">Gap:</label>
-                    <input type="number" id="gapInput" min="0" max="30" value="5">px
+                    <label for="gapInput" title="फोटो के बीच का अंतर">Gap:</label>
+                    <input type="number" id="gapInput" min="0" max="30" value="5" title="फोटो के बीच का अंतर (पिक्सेल में)">px
                 </div>
                 <div class="control-group">
-                    <label for="borderWidthInput">Border:</label>
-                    <input type="number" id="borderWidthInput" min="0" max="10" value="1">px
-                    <input type="color" id="borderColorInput" value="#000000" style="width:24px; height:22px; border:none; cursor:pointer; padding:0;">
+                    <label for="borderWidthInput" title="फोटो की बॉर्डर मोटाई">Border:</label>
+                    <input type="number" id="borderWidthInput" min="0" max="10" value="1" title="फोटो के चारों ओर बॉर्डर की मोटाई (पिक्सेल में)">px
+                    <input type="color" id="borderColorInput" value="#000000" style="width:24px; height:22px; border:none; cursor:pointer; padding:0;" title="बॉर्डर का रंग चुनें">
                 </div>
                 <div class="control-group">
-                    <label for="resizeSlider">All Zoom: <span id="zoomVal">100</span>%</label>
-                    <input type="range" id="resizeSlider" min="30" max="150" value="100">
+                    <label for="resizeSlider" title="स्क्रीन पर सभी फोटो का ज़ूम">All Zoom: <span id="zoomVal">100</span>%</label>
+                    <input type="range" id="resizeSlider" min="30" max="150" value="100" title="सभी फोटो का स्क्रीन ज़ूम (प्रिंट पर असर नहीं पड़ता)">
                 </div>
                 <div class="control-group">
-                    <button id="rotateAllBtn" title="Rotate All Photos 90°">🔄 Rotate All</button>
+                    <button id="rotateAllBtn" title="सभी फोटो को 90° घुमाएँ">🔄 Rotate All</button>
                 </div>
                 <div class="control-group" style="display:flex; gap:4px; align-items:center; flex-wrap:wrap;">
-                    <button id="a4ActualSizeBtn" type="button" title="Screen पर वास्तविक A4 physical size दिखाएँ">📄 A4 Actual Size</button>
-                    <button id="a4CalibrateBtn" type="button" title="Monitor की physical scale calibrate करें">📏 Calibrate Screen</button>
+                    <button id="a4ActualSizeBtn" type="button" title="स्क्रीन पर असली A4 साइज़ दिखाएँ">📄 A4 Actual Size</button>
+                    <button id="a4CalibrateBtn" type="button" title="अपने मॉनिटर को स्केल के लिए कैलिब्रेट करें">📏 Calibrate Screen</button>
                 </div>
                 <div class="control-group" id="pageColorControlsContainer" style="display: flex; gap: 4px; flex-wrap: wrap;"></div>
-                
+
                 <div class="control-group" style="gap: 5px;">
-                    <button id="prevPage" disabled>Prev</button>
-                    <button id="nextPage" disabled>Next</button>
-                    <button id="printButton" disabled>Print All</button>
-                    <button id="downloadButton" disabled>PNGs</button>
-                    <button id="downloadPdfButton" disabled>PDF</button>
-                    <button id="downloadCurrentButton" disabled>Current</button>
+                    <button id="prevPage" disabled title="पिछला पेज दिखाएँ">Prev</button>
+                    <button id="nextPage" disabled title="अगला पेज दिखाएँ">Next</button>
+                    <button id="printButton" disabled title="सभी पेज प्रिंट करें (PDF के रूप में खुलेगा)">Print All</button>
+                    <button id="downloadButton" disabled title="सभी पेज JPG इमेज के रूप में डाउनलोड करें">PNGs</button>
+                    <button id="downloadPdfButton" disabled title="सभी पेज एक PDF फाइल में डाउनलोड करें">PDF</button>
+                    <button id="downloadCurrentButton" disabled title="वर्तमान पेज को JPG इमेज के रूप में डाउनलोड करें">JPEG</button>
                 </div>
             </div>
         </div>
@@ -816,29 +808,29 @@
     <!-- Hidden Container for Printing -->
     <div id="printAreaContainer"></div>
 
-    <!-- Photo action sidebar: shown only after a photo is clicked -->
+    <!-- Photo action sidebar -->
     <aside id="photoActionSidebar" aria-label="Photo actions">
         <div class="sidebar-title">📷 Photo Tools</div>
         <div id="sidebarPhotoName" class="sidebar-photo-name"></div>
         <div id="sidebarPhotoSize"></div>
-        <button data-action="center">🎯 Center</button>
-        <button data-action="rotate">🔄 Rotate</button>
-        <button data-action="straighten">📐 Straighten</button>
-        <button data-action="crop">✂️ Crop</button>
-        <button data-action="stretch">↔️ Stretch</button>
-        <button data-action="size">📏 Size</button>
-        <button data-action="reset" class="sidebar-reset">↩️ Reset Photo</button>
-        <button data-action="light">☀️ Light</button>
-        <button data-action="move">📄 Move Page</button>
-        <button data-action="delete" class="sidebar-delete">❌ Delete</button>
-        <button data-action="close" class="sidebar-close">× Close</button>
+        <button data-action="center" title="फोटो को बीच में लाएँ">🎯 Center</button>
+        <button data-action="rotate" title="फोटो को 90° घुमाएँ">🔄 Rotate</button>
+        <button data-action="straighten" title="तिरछी फोटो को सीधा करें (8-point)">📐 Straighten</button>
+        <button data-action="crop" title="फोटो को काटें (Crop)">✂️ Crop</button>
+        <button data-action="stretch" title="फोटो को खींचकर फैलाएँ">↔️ Stretch</button>
+        <button data-action="size" title="प्रिंट साइज़ सेट करें (cm/inch)">📏 Size</button>
+        <button data-action="reset" class="sidebar-reset" title="फोटो को शुरुआती रूप में वापस लाएँ">↩️ Reset Photo</button>
+        <button data-action="light" title="फोटो की चमक (Brightness) बदलें">☀️ Light</button>
+        <button data-action="move" title="फोटो को दूसरे पेज पर भेजें">📄 Move Page</button>
+        <button data-action="delete" class="sidebar-delete" title="फोटो को हटाएँ">❌ Delete</button>
+        <button data-action="close" class="sidebar-close" title="यह पैनल बंद करें">× Close</button>
     </aside>
 
     <div id="movePageModal">
         <div id="movePageBox">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                 <strong style="font-size:15px;color:#0f172a;">📄 Move Photo to Page</strong>
-                <button id="movePageClose" style="background:#dc3545;padding:5px 9px;">×</button>
+                <button id="movePageClose" style="background:#dc3545;padding:5px 9px;" title="बंद करें">×</button>
             </div>
             <div id="movePageHint" style="font-size:11px;color:#64748b;margin-top:5px;text-align:left;"></div>
             <div id="movePageList"></div>
@@ -861,12 +853,12 @@
             <label style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">आपकी ruler में line कितनी cm है?</label>
             <div style="display:flex; gap:7px; align-items:center;">
                 <input id="a4CalibrationCm" type="number" min="1" max="30" step="0.1" value="10"
-                       style="flex:1; padding:7px; border:1px solid #94a3b8; border-radius:5px; box-sizing:border-box;">
+                       style="flex:1; padding:7px; border:1px solid #94a3b8; border-radius:5px; box-sizing:border-box;" title="रूलर से मापी गई असली लंबाई (cm में)">
                 <span style="font-size:12px;">cm</span>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:7px; margin-top:13px;">
-                <button id="a4CalibrationCancel" type="button" style="background:#dc3545; color:#fff;">Cancel</button>
-                <button id="a4CalibrationSave" type="button" style="background:#198754; color:#fff; font-weight:700;">✓ Save Calibration</button>
+                <button id="a4CalibrationCancel" type="button" style="background:#dc3545; color:#fff;" title="रद्द करें">Cancel</button>
+                <button id="a4CalibrationSave" type="button" style="background:#198754; color:#fff; font-weight:700;" title="कैलिब्रेशन सेव करें">✓ Save Calibration</button>
             </div>
         </div>
     </div>
@@ -882,60 +874,54 @@
     <!-- Modals -->
     <div id="editModal" class="custom-modal">
         <div class="modal-content" id="editModalContent">
-            <div class="modal-header-drag" id="editModalHeader">🖐️ Brightness Window (Drag Me)</div>
+            <div class="modal-header-drag" id="editModalHeader" title="इस हेडर को पकड़कर विंडो खिसकाएँ">🖐️ Brightness Window (Drag Me)</div>
             <h4 style="margin: 5px 0;">Adjust HD Light</h4>
             <p id="modalFileName" style="font-size: 11px; color: #666; margin: 2px 0;"></p>
             <div style="margin: 15px 0;">
                 <label for="modalBrightnessRange" style="font-weight: bold; font-size: 12px;">Brightness: <span id="modalBrightnessVal">100</span>%</label><br>
-                <input type="range" id="modalBrightnessRange" min="30" max="180" value="100" style="width: 100%; margin-top: 8px;">
+                <input type="range" id="modalBrightnessRange" min="30" max="180" value="100" style="width: 100%; margin-top: 8px;" title="फोटो की चमक कम या ज़्यादा करें">
             </div>
             <span style="font-size: 10px; color: #007bff; display: block; margin-bottom: 10px;">💡 पीछे A4 पेज में लाइव बदलाव देखें</span>
             <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <button id="modalResetBtn" style="background-color: #ffc107; color: #000;">Reset</button>
-                <button id="modalCloseBtn" style="background-color: #28a745;">Done</button>
+                <button id="modalResetBtn" style="background-color: #ffc107; color: #000;" title="चमक को 100% पर वापस लाएँ">Reset</button>
+                <button id="modalCloseBtn" style="background-color: #28a745;" title="बदलाव सेव करके बंद करें">Done</button>
             </div>
         </div>
     </div>
 
-    <!-- SIZE MODAL: PRESETS + ORIGINAL SIZE (EDITABLE) -->
+    <!-- SIZE MODAL -->
     <div id="sizeModal" class="custom-modal">
         <div class="modal-content" id="sizeModalContent">
-            <div class="modal-header-drag" id="sizeModalHeader">🖐️ Photo Dimensions Editor</div>
+            <div class="modal-header-drag" id="sizeModalHeader" title="इस हेडर को पकड़कर विंडो खिसकाएँ">🖐️ Photo Dimensions Editor</div>
             <h4 style="margin: 5px 0; color: #0f172a;">📏 Print Size</h4>
             <div id="originalSizeInfo" style="font-size: 11px; font-weight: 700; color: #007bff; margin: 2px 0 6px;">Original Photo Size: --</div>
             <p id="sizeModalFileName" style="font-size: 11px; color: #666; margin: 2px 0;"></p>
-            
+
             <div style="margin: 10px 0; padding: 8px; background: #f8f9fa; border: 1px solid #007bff; border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
-                <!-- OPTION 1: 10 x 7 -->
                 <div>
-                    <button id="preset10x7Btn" class="preset-btn" style="background: #17a2b8; color: white;">
+                    <button id="preset10x7Btn" class="preset-btn" style="background: #17a2b8; color: white;" title="आधार कार्ड / ID कार्ड साइज़ 10 × 7 cm">
                         🪪 Aadhaar: 10 x 7 cm
                     </button>
                     <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Aadhaar / ID Card)</span>
                 </div>
-
-                <!-- OPTION 2: 15 x 12 -->
                 <div>
-                    <button id="preset15x12Btn" class="preset-btn" style="background: #6f42c1; color: white;">
+                    <button id="preset15x12Btn" class="preset-btn" style="background: #6f42c1; color: white;" title="बैंक पासबुक साइज़ 15 × 12 cm">
                         📘 Bank Passbook: 15 x 12 cm
                     </button>
                     <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Bank Passbook)</span>
                 </div>
-
-                <!-- OPTION 3: LANDSCAPE 28 x 19 -->
                 <div>
-                    <button id="preset28x20Btn" class="preset-btn" style="background: #fd7e14; color: white;">
+                    <button id="preset28x20Btn" class="preset-btn" style="background: #fd7e14; color: white;" title="लैंडस्केप फोटो साइज़ 28 × 19 cm (A4 पूरा पेज)">
                         🖼️ Landscape Photo: 28 x 19 cm
                     </button>
                     <span style="font-size: 10px; color: #666; display: block; margin-top: 2px;">(Landscape / A4 Full Page)</span>
                 </div>
             </div>
 
-            <!-- ORIGINAL PHOTO SIZE: editable directly in the same fields -->
             <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px; text-align: left;">
                 <div style="margin: 6px 0;">
                     <label style="font-size: 11px; font-weight: bold;">Unit:</label>
-                    <select id="unitSelect" style="width: 100%; padding: 4px; margin-top: 2px;">
+                    <select id="unitSelect" style="width: 100%; padding: 4px; margin-top: 2px;" title="माप की इकाई चुनें — cm या inch">
                         <option value="cm">Centimeter (cm)</option>
                         <option value="inch">Inch</option>
                     </select>
@@ -943,23 +929,23 @@
                 <div style="display: flex; gap: 8px; margin: 6px 0;">
                     <div style="flex: 1;">
                         <label style="font-size: 11px; font-weight: bold;" id="widthLabel">Width:</label>
-                        <input type="number" id="inputWidthVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;">
+                        <input type="number" id="inputWidthVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;" title="फोटो की चौड़ाई">
                     </div>
                     <div style="flex: 1;">
                         <label style="font-size: 11px; font-weight: bold;" id="heightLabel">Height:</label>
-                        <input type="number" id="inputHeightVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;">
+                        <input type="number" id="inputHeightVal" step="0.1" min="0.5" max="30" value="5" style="width: 100%; padding: 4px; margin-top: 2px; box-sizing: border-box;" title="फोटो की ऊँचाई">
                     </div>
                 </div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; margin: 10px 0 6px 0;">
-                <button id="applySizeAllBtn" style="background-color: #007bff; color: white;">📐 Apply This Size to All Photos</button>
-                <button id="autoArrangeSizeBtn" style="background-color: #20c997; color: white;">⚡ Auto Arrange by This Size</button>
-                <button id="restoreOriginalBtn" style="background-color: #fd7e14; color: white;">↺ Restore Original Photo</button>
+                <button id="applySizeAllBtn" style="background-color: #007bff; color: white;" title="यह साइज़ इस पेज की सभी फोटो पर लगाएँ">📐 Apply This Size to All Photos</button>
+                <button id="autoArrangeSizeBtn" style="background-color: #20c997; color: white;" title="इस साइज़ के हिसाब से फोटो को अपने-आप व्यवस्थित करें">⚡ Auto Arrange by This Size</button>
+                <button id="restoreOriginalBtn" style="background-color: #fd7e14; color: white;" title="फोटो को शुरुआती ओरिजिनल रूप में वापस लाएँ">↺ Restore Original Photo</button>
             </div>
             <div style="display: flex; justify-content: space-between; gap: 10px;">
-                <button id="sizeModalResetBtn" style="background-color: #ffc107; color: #000;">Auto Fit</button>
-                <button id="sizeModalCloseBtn" style="background-color: #28a745;">Done</button>
+                <button id="sizeModalResetBtn" style="background-color: #ffc107; color: #000;" title="फोटो को अपने-आप फिट करें">Auto Fit</button>
+                <button id="sizeModalCloseBtn" style="background-color: #28a745;" title="बंद करें">Done</button>
             </div>
         </div>
     </div>
@@ -969,10 +955,10 @@
         <div class="modal-content" id="cropModalContent">
             <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 6px 12px; border-radius: 4px; flex-shrink: 0; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
                 <span style="color: #00ffcc; font-weight: bold; font-size: 14px;">✂️ Photoshop Freeform Crop & Pan Tool</span>
-                
+
                 <div style="display: flex; gap: 6px; align-items: center;">
-                    <button id="cropDragMoveBtn" class="tool-btn" style="background: #17a2b8; color: white;" title="Click to Move/Pan Photo">🖐️ Move Photo</button>
-                    <button id="cropDragCropBtn" class="tool-btn active-btn" style="background: #007bff; color: white;" title="Click to Draw Crop Box">✂️ Draw Crop Box</button>
+                    <button id="cropDragMoveBtn" class="tool-btn" style="background: #17a2b8; color: white;" title="फोटो को खिसकाने/पैन करने के लिए क्लिक करें">🖐️ Move Photo</button>
+                    <button id="cropDragCropBtn" class="tool-btn active-btn" style="background: #007bff; color: white;" title="क्रॉप बॉक्स खींचने के लिए क्लिक करें">✂️ Draw Crop Box</button>
                 </div>
 
                 <span style="color: #cbd5e1; font-size: 11px;">💡 ज़ूम करके फोटो को ऊपर-नीचे खिसकाने के लिए 🖐️ Move Photo पर क्लिक करें</span>
@@ -981,10 +967,10 @@
                 <img id="cropImageTarget">
             </div>
             <div style="display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; flex-shrink: 0;">
-                <button id="cropRestoreBtn" style="background-color: #fd7e14;">↺ Restore Original</button>
+                <button id="cropRestoreBtn" style="background-color: #fd7e14;" title="फोटो को ओरिजिनल रूप में वापस लाएँ">↺ Restore Original</button>
                 <div>
-                    <button id="cropCancelBtn" style="background-color: #dc3545;">Cancel</button>
-                    <button id="cropApplyBtn" style="background-color: #28a745; font-weight: bold;">Apply Crop</button>
+                    <button id="cropCancelBtn" style="background-color: #dc3545;" title="रद्द करें">Cancel</button>
+                    <button id="cropApplyBtn" style="background-color: #28a745; font-weight: bold;" title="क्रॉप लागू करें">Apply Crop</button>
                 </div>
             </div>
         </div>
@@ -993,20 +979,32 @@
     <!-- FULL SCREEN PERSPECTIVE FIX MODAL -->
     <div id="perspectiveModal" class="custom-modal">
         <div class="modal-content" id="perspectiveModalContent">
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px 12px; border-radius: 6px; flex-shrink: 0; flex-wrap: wrap; gap: 8px;">
-                <span style="font-size: 15px; font-weight: bold; color: #00ffcc;">📐 8-Point Straighten / Stretch</span>
-                
-                <div style="display: flex; align-items: center; gap: 6px; background: #0f172a; padding: 3px 8px; border-radius: 5px; border: 1px solid #334155;">
-                    <span style="font-size: 12px; color: #aaa;">Zoom:</span>
-                    <button id="perspZoomOut" class="tool-btn" title="Zoom Out">🔍 -</button>
-                    <span id="perspZoomLevel" style="font-size: 13px; font-weight: bold; color: #00ffcc; min-width: 42px;">100%</span>
-                    <button id="perspZoomIn" class="tool-btn" title="Zoom In">🔍 +</button>
-                    <button id="perspZoomFit" class="tool-btn" title="Reset Zoom Fit">🔍 Fit</button>
+            <div style="display: flex; flex-direction: column; gap: 6px; background: #1e293b; padding: 8px 12px; border-radius: 6px; flex-shrink: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 15px; font-weight: bold; color: #00ffcc;">📐 8-Point Straighten / Stretch</span>
+
+                    <div style="display: flex; align-items: center; gap: 6px; background: #0f172a; padding: 3px 8px; border-radius: 5px; border: 1px solid #334155;">
+                        <span style="font-size: 12px; color: #aaa;">Zoom:</span>
+                        <button id="perspZoomOut" class="tool-btn" title="ज़ूम कम करें">🔍 -</button>
+                        <span id="perspZoomLevel" style="font-size: 13px; font-weight: bold; color: #00ffcc; min-width: 42px;">100%</span>
+                        <button id="perspZoomIn" class="tool-btn" title="ज़ूम बढ़ाएँ">🔍 +</button>
+                        <button id="perspZoomFit" class="tool-btn" title="ज़ूम रीसेट करें">🔍 Fit</button>
+                    </div>
                 </div>
 
-                <span style="font-size: 11px; color: #cbd5e1;">💡 माउस क्लिक करके फोटो को ऊपर-नीचे खिसकाएं (Pan)</span>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; background: #0f172a; padding: 5px 10px; border-radius: 5px; border: 1px solid #334155;">
+                    <span style="font-size: 12px; color: #00ffcc; font-weight: bold;">🎯 सीधा करें:</span>
+                    <button id="perspRotateCCW" class="tool-btn" title="फोटो को 90° बाएँ (वामावर्त) घुमाएँ">↺ 90°</button>
+                    <button id="perspRotateCW" class="tool-btn" title="फोटो को 90° दाएँ (दक्षिणावर्त) घुमाएँ">↻ 90°</button>
+                    <span style="font-size: 11px; color: #aaa;">कोण:</span>
+                    <input type="range" id="perspAngleSlider" min="-15" max="15" step="0.1" value="0" style="width: 160px;" title="फोटो को बारीक कोण (-15° से +15°) पर घुमाकर सीधा करें">
+                    <span id="perspAngleValue" style="font-size: 12px; color: #00ffcc; font-weight: bold; min-width: 52px; text-align: center;">0.0°</span>
+                    <button id="perspAngleReset" class="tool-btn" title="कोण को शून्य (0°) करें">↺ कोण शून्य</button>
+                </div>
+
+                <span style="font-size: 11px; color: #cbd5e1; text-align: center;">💡 माउस से ड्रैग करके फोटो खिसकाएँ (Pan) · 8 कोनों को खींचकर फोटो सीधी करें · बारीक कोण के लिए स्लाइडर इस्तेमाल करें</span>
             </div>
-            
+
             <div class="persp-container" id="perspContainer">
                 <canvas id="perspMagnifier"></canvas>
 
@@ -1014,32 +1012,32 @@
                     <canvas id="perspBaseCanvas"></canvas>
                     <canvas id="perspCanvasOverlay"></canvas>
 
-                    <div class="persp-corner" id="cornerTL" title="Top Left (TL)"></div>
-                    <div class="persp-corner" id="cornerTR" title="Top Right (TR)"></div>
-                    <div class="persp-corner" id="cornerBR" title="Bottom Right (BR)"></div>
-                    <div class="persp-corner" id="cornerBL" title="Bottom Left (BL)"></div>
+                    <div class="persp-corner" id="cornerTL" title="ऊपर-बाएँ कोना (Top Left)"></div>
+                    <div class="persp-corner" id="cornerTR" title="ऊपर-दाएँ कोना (Top Right)"></div>
+                    <div class="persp-corner" id="cornerBR" title="नीचे-दाएँ कोना (Bottom Right)"></div>
+                    <div class="persp-corner" id="cornerBL" title="नीचे-बाएँ कोना (Bottom Left)"></div>
 
-                    <div class="persp-corner midpoint-handle" id="cornerTM" title="Top Edge Middle"></div>
-                    <div class="persp-corner midpoint-handle" id="cornerRM" title="Right Edge Middle"></div>
-                    <div class="persp-corner midpoint-handle" id="cornerBM" title="Bottom Edge Middle"></div>
-                    <div class="persp-corner midpoint-handle" id="cornerLM" title="Left Edge Middle"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerTM" title="ऊपरी किनारा मध्य"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerRM" title="दायाँ किनारा मध्य"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerBM" title="निचला किनारा मध्य"></div>
+                    <div class="persp-corner midpoint-handle" id="cornerLM" title="बायाँ किनारा मध्य"></div>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #0f172a; padding: 4px; flex-shrink: 0;">
-                <button id="perspResetBtn" style="background-color: #ffc107; color: #000; font-size: 13px; font-weight: bold;">↺ Reset Corners</button>
-                
+                <button id="perspResetBtn" style="background-color: #ffc107; color: #000; font-size: 13px; font-weight: bold;" title="सभी 8 कोनों को शुरुआती स्थिति में लाएँ">↺ Reset Corners</button>
+
                 <div class="nudge-controls">
                     <span style="font-size: 11px; color: #aaa; margin-right: 4px;">1px Move:</span>
-                    <button class="nudge-btn" id="nudgeLeft" title="Move Left">←</button>
-                    <button class="nudge-btn" id="nudgeUp" title="Move Up">↑</button>
-                    <button class="nudge-btn" id="nudgeDown" title="Move Down">↓</button>
-                    <button class="nudge-btn" id="nudgeRight" title="Move Right">→</button>
+                    <button class="nudge-btn" id="nudgeLeft" title="चुने हुए कोने को 1px बाएँ खिसकाएँ">←</button>
+                    <button class="nudge-btn" id="nudgeUp" title="चुने हुए कोने को 1px ऊपर खिसकाएँ">↑</button>
+                    <button class="nudge-btn" id="nudgeDown" title="चुने हुए कोने को 1px नीचे खिसकाएँ">↓</button>
+                    <button class="nudge-btn" id="nudgeRight" title="चुने हुए कोने को 1px दाएँ खिसकाएँ">→</button>
                 </div>
 
                 <div style="display: flex; gap: 8px;">
-                    <button id="perspCancelBtn" style="background-color: #dc3545; padding: 8px 15px; font-weight: bold;">Cancel</button>
-                    <button id="perspApplyBtn" style="background-color: #28a745; padding: 8px 20px; font-size: 14px; font-weight: bold;">✓ Straighten Photo (OK)</button>
+                    <button id="perspCancelBtn" style="background-color: #dc3545; padding: 8px 15px; font-weight: bold;" title="रद्द करें">Cancel</button>
+                    <button id="perspApplyBtn" style="background-color: #28a745; padding: 8px 20px; font-size: 14px; font-weight: bold;" title="बदलाव लागू करें (OK)">✓ Straighten Photo (OK)</button>
                 </div>
             </div>
         </div>
@@ -1061,6 +1059,7 @@
         const zoomVal = document.getElementById('zoomVal');
         const rotateAllBtn = document.getElementById('rotateAllBtn');
         const gridArrangeBtn = document.getElementById('gridArrangeBtn');
+        const fillPageBtn = document.getElementById('fillPageBtn');
         const applySizeAllBtn = document.getElementById('applySizeAllBtn');
         const autoArrangeSizeBtn = document.getElementById('autoArrangeSizeBtn');
         const photoActionSidebar = document.getElementById('photoActionSidebar');
@@ -1084,7 +1083,6 @@
         const loadingModal = document.getElementById('loadingModal');
         const loadingText = document.getElementById('loadingText');
 
-        // Print / preview margins in mm (user controllable)
         function getPrintMargins() {
             const clamp = (v, def) => {
                 const n = parseFloat(v);
@@ -1106,9 +1104,6 @@
             }
         }
 
-        // After a rotate swaps width↔height, freeX/freeY (top-left) can push the
-        // photo's new, differently-shaped box past the page's right/bottom edge —
-        // visually it then overlaps the next page below. Pull it back inside.
         function clampFreePositionToPage(p) {
             if (!p) return;
             const m = getPrintMargins();
@@ -1133,7 +1128,6 @@
 
         function onMarginChange() {
             applyPreviewMargins();
-            // free-layout content area changes with margins — refresh so positions stay sensible
             if (typeof refreshAll === 'function') {
                 try { refreshAll(); } catch (e) {}
             }
@@ -1144,10 +1138,8 @@
                 el.addEventListener('input', () => applyPreviewMargins());
             }
         });
-        // initial
         setTimeout(applyPreviewMargins, 0);
 
-        // A4 Actual Size screen preview is isolated from photo/layout data.
         const a4ActualSizeBtn = document.getElementById('a4ActualSizeBtn');
         const a4CalibrateBtn = document.getElementById('a4CalibrateBtn');
         const a4CalibrationModal = document.getElementById('a4CalibrationModal');
@@ -1172,8 +1164,6 @@
                 a4CalibrationModal.style.display = 'flex';
                 return;
             }
-            // The page itself remains 210mm × 297mm. This transform only controls
-            // its physical on-screen display; photo/layout data are untouched.
             const calibrationScale = 10 / measuredCm;
             a4Preview.style.transform = `scale(${calibrationScale})`;
             a4ActualSizeBtn.textContent = '📄 A4 Actual: ON';
@@ -1256,6 +1246,12 @@
         const perspZoomFitBtn = document.getElementById('perspZoomFit');
         const perspZoomLevelLabel = document.getElementById('perspZoomLevel');
 
+        const perspAngleSlider = document.getElementById('perspAngleSlider');
+        const perspAngleValue = document.getElementById('perspAngleValue');
+        const perspAngleReset = document.getElementById('perspAngleReset');
+        const perspRotateCCW = document.getElementById('perspRotateCCW');
+        const perspRotateCW = document.getElementById('perspRotateCW');
+
         const cornerElements = {
             TL: document.getElementById('cornerTL'),
             TM: document.getElementById('cornerTM'),
@@ -1266,22 +1262,24 @@
             BL: document.getElementById('cornerBL'),
             LM: document.getElementById('cornerLM')
         };
-        
+
         let cornerPoints = { TL: {x:0, y:0}, TR: {x:0, y:0}, BR: {x:0, y:0}, BL: {x:0, y:0} };
-        let perspImageObj = null;
+        let perspSourceImage = null;   // ओरिजिनल इमेज
+        let perspRenderImage = null;   // कोण के बाद वाली इमेज (canvas/image)
+        let perspAngle = 0;            // बारीक कोण (डिग्री)
+        let perspQuarter = 0;          // 90° रोटेशन काउंट (0-3)
         let activeCornerKey = 'TL';
 
         let perspZoom = 1.0;
         let baseCanvasW = 0;
         let baseCanvasH = 0;
 
-        let photos = []; 
-        let pageModes = {}; 
-        let pageConfigs = {}; 
+        let photos = [];
+        let pageModes = {};
+        let pageConfigs = {};
         let currentPage = 1;
         let currentScale = 1;
 
-        // UNDO / REDO HISTORY STACKS
         let actionHistory = [];
         let redoHistory = [];
         const MAX_HISTORY = 40;
@@ -1399,12 +1397,6 @@
                 if (!p.isBlank && (p.page || 1) === page) indices.push(i);
             });
             return indices;
-        }
-
-        function getPagePhotoRange(pageNum) {
-            const indices = getPagePhotoIndices(pageNum);
-            const cfg = getPageConfig(pageNum);
-            return { indices, start: indices.length ? indices[0] : 0, end: indices.length ? indices[indices.length - 1] + 1 : 0, cfg };
         }
 
         function getTotalPages() {
@@ -1547,8 +1539,8 @@
         async function processFiles(fileList) {
             if (!fileList || fileList.length === 0) return;
             saveStateToHistory();
-            
-            const files = Array.from(fileList).sort((a, b) => 
+
+            const files = Array.from(fileList).sort((a, b) =>
                 a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
             );
 
@@ -1601,17 +1593,14 @@
                     });
                 }
             }
-            
+
             try { photoInput.value = ''; } catch(err) {}
 
-            // Upload target: "इस पेज पर" = current, "नए पेज पर" = next empty/new page
             const uploadMode = (uploadTargetSelect && uploadTargetSelect.value) || 'current';
             let targetPage = Math.max(1, currentPage);
             if (uploadMode === 'new') {
-                // हमेशा एक नया पेज बनाकर उसी पर डालें
                 targetPage = Math.max(1, getTotalPages()) + 1;
-                getPageConfig(targetPage); // ensure config exists
-                // current page layout copy if available
+                getPageConfig(targetPage);
                 const prevCfg = getPageConfig(currentPage);
                 const cfgNew = getPageConfig(targetPage);
                 if (!cfgNew.layoutCustomized) {
@@ -1626,8 +1615,6 @@
             let usedOnPage = getPagePhotoIndices(targetPage).length;
             for (const np of newPhotos) {
                 let cfg = getPageConfig(targetPage);
-                // free layout: इस पेज पर ही रखो (जब तक user ने "नए पेज" न चुना हो)
-                // grid layout: capacity भरने पर अगला पेज
                 if (!cfg.free && uploadMode === 'current') {
                     const capacity = Math.max(1, (cfg.rows || 1) * (cfg.cols || 1));
                     if (usedOnPage >= capacity) {
@@ -1673,8 +1660,8 @@
 
         function nudgeActiveCorner(dx, dy) {
             if (!activeCornerKey) return;
-            const maxW = perspBaseCanvas.width;
-            const maxH = perspBaseCanvas.height;
+            const maxW = baseCanvasW;
+            const maxH = baseCanvasH;
             function clampX(val) { return Math.max(0, Math.min(maxW, val)); }
             function clampY(val) { return Math.max(0, Math.min(maxH, val)); }
 
@@ -1784,8 +1771,6 @@
                 const nextPage = page + 1;
                 const nextCfg = getPageConfig(nextPage);
 
-                // यदि अगला पेज खाली और अभी manually customized नहीं है,
-                // तो current page का layout उसी पर भी लागू करें।
                 if (getPagePhotoIndices(nextPage).length === 0 && !nextCfg.layoutCustomized) {
                     nextCfg.rows = cfg.rows;
                     nextCfg.cols = cfg.cols;
@@ -1887,18 +1872,13 @@
             if (currentPage > 1) { currentPage--; refreshAll(); }
         });
 
-        nextPageButton.addEventListener('click', () => { 
+        nextPageButton.addEventListener('click', () => {
             const total = getTotalPages();
             if (currentPage < total) { currentPage++; refreshAll(); }
         });
 
-        // PERFORMANCE: decoded-image cache so the same photo is never re-decoded
-        // twice across pages/print/download in one session. Key = photo.url
-        // (a fresh data-URL is generated automatically whenever a photo is
-        // edited, so the cache always stays correct on its own).
         const __decodedImgCache = new Map();
 
-        // Pure-canvas print: no html2canvas layout bugs. Sizes match freeWidth/pullW exactly.
         async function capturePageAsCanvasSilent(pageIdx, renderScale = 300 / 96) {
             const m = getPrintMargins();
             const PX_PER_MM = 96 / 25.4;
@@ -1923,7 +1903,7 @@
 
             const cfg = getPageConfig(pageIdx);
             const indices = getPagePhotoIndices(pageIdx);
-            const factor = 37.8; // cm → CSS px at 96dpi
+            const factor = 37.8;
             const isBw = pageModes[pageIdx] === 'bw';
             const borderW = parseFloat(borderWidthInput && borderWidthInput.value) || 0;
             const borderColor = (borderColorInput && borderColorInput.value) || '#000000';
@@ -1964,7 +1944,6 @@
                     }
                     x = padL + (Number(p.freeX) || 0) * s;
                     y = padT + (Number(p.freeY) || 0) * s;
-                    // Fill Page / near-full → snap to exact printable area
                     if (w >= contentW * 0.85 && h >= contentH * 0.85) {
                         x = padL; y = padT; w = contentW; h = contentH;
                     }
@@ -2016,10 +1995,9 @@
 
         downloadCurrentButton.addEventListener('click', async () => {
             try {
-                showLoading(`पेज ${currentPage} डाउनलोड हो रहा है...`);
+                showLoading(`पेज ${currentPage} JPG में डाउनलोड हो रहा है...`);
                 setTimeout(async () => {
                     const canvas = await capturePageAsCanvasSilent(currentPage);
-                    // JPEG encode is far faster than PNG at 300 DPI with no visible quality loss for photos.
                     triggerBrowserDownload(canvas.toDataURL('image/jpeg', 0.95), `page-${currentPage}.jpg`);
                     hideLoading();
                 }, 100);
@@ -2030,10 +2008,6 @@
         });
 
         printButton.addEventListener('click', async () => {
-            // PRINT ONLY: keep the existing editor/preview untouched.
-            // Each A4 page is rendered at true 300 DPI and stored as a
-            // high-quality JPEG. Only one page's raster is kept in memory
-            // at a time, so large jobs (including ~40 pages) remain manageable.
             let pdf = null;
             try {
                 showLoading('प्रिन्ट PDF तैयार हो रही है...');
@@ -2048,9 +2022,6 @@
                     compress: true
                 });
 
-                // A4 at 300 DPI = 2480 × 3508 pixels.
-                // The old print path captured at 96 DPI and then enlarged it
-                // to 1240 × 1754, which permanently reduced fine text/detail.
                 const PRINT_W = 2480;
                 const PRINT_H = 3508;
                 const PRINT_SCALE = 300 / 96;
@@ -2059,12 +2030,8 @@
                 for (let p = 1; p <= totalPages; p++) {
                     showLoading(`प्रिन्ट PDF तैयार हो रही है... पेज ${p} / ${totalPages}`);
 
-                    // Capture directly at 300 DPI. Do NOT first capture a
-                    // low-resolution page and enlarge it.
                     const pageCanvas = await capturePageAsCanvasSilent(p, PRINT_SCALE);
 
-                    // html2canvas uses CSS pixels; ensure the resulting canvas
-                    // is exactly the A4 300-DPI raster expected by the printer.
                     let finalCanvas = pageCanvas;
 
                     if (pageCanvas.width !== PRINT_W || pageCanvas.height !== PRINT_H) {
@@ -2080,15 +2047,11 @@
                         finalCtx.drawImage(pageCanvas, 0, 0, PRINT_W, PRINT_H);
                     }
 
-                    // High-quality JPEG keeps text/lines much sharper than the
-                    // previous 0.72 JPEG setting while remaining considerably
-                    // faster and smaller than PNG for a 40-page print job.
                     const jpegData = finalCanvas.toDataURL('image/jpeg', JPEG_QUALITY);
 
                     if (p > 1) pdf.addPage('a4', 'p');
                     pdf.addImage(jpegData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
 
-                    // Release this page immediately before processing the next.
                     pageCanvas.width = 1;
                     pageCanvas.height = 1;
 
@@ -2097,7 +2060,6 @@
                         finalCanvas.height = 1;
                     }
 
-                    // Small yield keeps Chrome responsive during long print jobs.
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
@@ -2130,11 +2092,9 @@
                 for (let p = 1; p <= totalPages; p++) {
                     showLoading(`सभी पेज डाउनलोड हो रहे हैं... पेज ${p} / ${totalPages}`);
                     const canvas = await capturePageAsCanvasSilent(p);
-                    // JPEG encode is far faster than PNG at 300 DPI with no visible quality loss for photos.
                     triggerBrowserDownload(canvas.toDataURL('image/jpeg', 0.95), `page-${p}.jpg`);
                     canvas.width = 1;
                     canvas.height = 1;
-                    // keep the tab responsive on large multi-page jobs
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
                 hideLoading();
@@ -2177,7 +2137,7 @@
             modalBrightnessVal.textContent = val;
             if (activeEditingIndex !== null && photos[activeEditingIndex]) {
                 photos[activeEditingIndex].brightness = parseInt(val);
-                
+
                 const cardImg = document.querySelector(`.photo-card[data-index="${activeEditingIndex}"] img`);
                 if (cardImg) {
                     let filterVal = `brightness(${val}%)`;
@@ -2242,7 +2202,6 @@
                 p.pullW = null;
                 p.pullH = null;
                 p.stretchLevel = 0;
-                // अगर पहले stretch था तो हटाओ ताकि custom size लगे
                 if (p.fitMode === 'stretch') p.fitMode = 'custom';
 
                 unitSelect.value = 'cm';
@@ -2447,7 +2406,7 @@
                     photos[activeEditingIndex].pullH = null;
                     if (!(photos[activeEditingIndex].customWidth > 0 && photos[activeEditingIndex].customHeight > 0)) photos[activeEditingIndex].fitMode = 'contain';
                 }
-                
+
                 cropperInstance.destroy();
                 cropModal.style.display = 'none';
                 activeEditingIndex = null;
@@ -2464,30 +2423,58 @@
             };
         }
 
+        // नई सुविधा: कोण बदलने पर इमेज रीबेक करना
+        function rebakePerspImage() {
+            if (!perspSourceImage) return;
+            const totalAngle = perspAngle + perspQuarter * 90;
+            const rad = totalAngle * Math.PI / 180;
+            const w = perspSourceImage.width;
+            const h = perspSourceImage.height;
+            const cos = Math.abs(Math.cos(rad));
+            const sin = Math.abs(Math.sin(rad));
+            const nw = Math.max(1, Math.round(w * cos + h * sin));
+            const nh = Math.max(1, Math.round(w * sin + h * cos));
+            const c = document.createElement('canvas');
+            c.width = nw;
+            c.height = nh;
+            const ctx = c.getContext('2d');
+            // पारदर्शी बैकग्राउंड
+            ctx.clearRect(0, 0, nw, nh);
+            ctx.translate(nw / 2, nh / 2);
+            ctx.rotate(rad);
+            ctx.drawImage(perspSourceImage, -w / 2, -h / 2);
+            perspRenderImage = c;
+            resizePerspectiveCanvas();
+        }
+
         function initPerspectiveModal(photoObj) {
-            perspImageObj = new Image();
-            perspImageObj.crossOrigin = "anonymous";
-            perspImageObj.onload = () => {
+            perspSourceImage = new Image();
+            perspSourceImage.crossOrigin = "anonymous";
+            perspSourceImage.onload = () => {
+                perspAngle = 0;
+                perspQuarter = 0;
+                if (perspAngleSlider) perspAngleSlider.value = 0;
+                if (perspAngleValue) perspAngleValue.textContent = '0.0°';
                 perspectiveModal.style.display = 'flex';
                 perspZoom = 1.0;
 
                 setTimeout(() => {
-                    resizePerspectiveCanvas();
+                    rebakePerspImage();
                     activeCornerKey = 'TL';
                     updateCornerHandlePositions();
                     drawPerspectiveOverlay();
                 }, 50);
             };
-            perspImageObj.src = photoObj.url;
+            perspSourceImage.src = photoObj.url;
         }
 
         function resizePerspectiveCanvas() {
-            if (!perspImageObj) return;
+            if (!perspRenderImage) return;
             const containerW = perspContainer.clientWidth - 20;
             const containerH = perspContainer.clientHeight - 20;
 
-            let w = perspImageObj.width;
-            let h = perspImageObj.height;
+            let w = perspRenderImage.width;
+            let h = perspRenderImage.height;
 
             let scale = Math.min(containerW / w, containerH / h, 1);
             baseCanvasW = Math.round(w * scale);
@@ -2523,7 +2510,9 @@
 
             const ctx = perspBaseCanvas.getContext('2d');
             ctx.clearRect(0, 0, baseCanvasW, baseCanvasH);
-            ctx.drawImage(perspImageObj, 0, 0, baseCanvasW, baseCanvasH);
+            if (perspRenderImage) {
+                ctx.drawImage(perspRenderImage, 0, 0, baseCanvasW, baseCanvasH);
+            }
 
             perspZoomLevelLabel.textContent = Math.round(perspZoom * 100) + '%';
             updateCornerHandlePositions();
@@ -2533,6 +2522,38 @@
         perspZoomInBtn.onclick = () => { perspZoom = Math.min(perspZoom + 0.5, 15.0); applyPerspZoom(); };
         perspZoomOutBtn.onclick = () => { perspZoom = Math.max(perspZoom - 0.5, 0.5); applyPerspZoom(); };
         perspZoomFitBtn.onclick = () => { perspZoom = 1.0; applyPerspZoom(); };
+
+        // नई सुविधा: बारीक कोण स्लाइडर
+        if (perspAngleSlider) {
+            let angleRaf = null;
+            perspAngleSlider.addEventListener('input', () => {
+                const v = parseFloat(perspAngleSlider.value) || 0;
+                perspAngle = v;
+                perspAngleValue.textContent = v.toFixed(1) + '°';
+                if (angleRaf) cancelAnimationFrame(angleRaf);
+                angleRaf = requestAnimationFrame(() => { rebakePerspImage(); });
+            });
+        }
+        if (perspAngleReset) {
+            perspAngleReset.addEventListener('click', () => {
+                perspAngle = 0;
+                perspAngleSlider.value = 0;
+                perspAngleValue.textContent = '0.0°';
+                rebakePerspImage();
+            });
+        }
+        if (perspRotateCCW) {
+            perspRotateCCW.addEventListener('click', () => {
+                perspQuarter = (perspQuarter + 3) % 4; // -90°
+                rebakePerspImage();
+            });
+        }
+        if (perspRotateCW) {
+            perspRotateCW.addEventListener('click', () => {
+                perspQuarter = (perspQuarter + 1) % 4; // +90°
+                rebakePerspImage();
+            });
+        }
 
         let isPanningPersp = false;
         let panStartX = 0, panStartY = 0;
@@ -2584,7 +2605,7 @@
         }, { passive: false });
 
         window.addEventListener('resize', () => {
-            if (perspectiveModal.style.display === 'flex' && perspImageObj) resizePerspectiveCanvas();
+            if (perspectiveModal.style.display === 'flex' && perspRenderImage) resizePerspectiveCanvas();
         });
 
         function updateCornerHandlePositions() {
@@ -2643,7 +2664,7 @@
             perspMagnifier.width = 140;
             perspMagnifier.height = 140;
             const mCtx = perspMagnifier.getContext('2d');
-            
+
             mCtx.fillStyle = '#000';
             mCtx.fillRect(0, 0, 140, 140);
 
@@ -2758,11 +2779,11 @@
         });
 
         perspApplyBtn.addEventListener('click', () => {
-            if (activeEditingIndex === null || !photos[activeEditingIndex]) return;
+            if (activeEditingIndex === null || !photos[activeEditingIndex] || !perspRenderImage) return;
             saveStateToHistory();
 
-            const scaleX = perspImageObj.width / baseCanvasW;
-            const scaleY = perspImageObj.height / baseCanvasH;
+            const scaleX = perspRenderImage.width / baseCanvasW;
+            const scaleY = perspRenderImage.height / baseCanvasH;
 
             const srcQuad = [
                 { x: cornerPoints.TL.x * scaleX, y: cornerPoints.TL.y * scaleY },
@@ -2783,7 +2804,7 @@
             outCanvas.width = outW;
             outCanvas.height = outH;
 
-            warpPerspectiveHomography(perspImageObj, srcQuad, outCanvas);
+            warpPerspectiveHomography(perspRenderImage, srcQuad, outCanvas);
 
             photos[activeEditingIndex].url = outCanvas.toDataURL('image/png');
             photos[activeEditingIndex].rotation = 0;
@@ -2929,7 +2950,7 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     const rad = (rotationDegrees * Math.PI) / 180;
-                    
+
                     if (rotationDegrees === 90 || rotationDegrees === 270) {
                         canvas.width = img.height;
                         canvas.height = img.width;
@@ -2956,6 +2977,7 @@
                 updateGridLayout();
                 updatePageModeControls();
                 applyPreviewMargins();
+                updateFillPageButton();
 
                 if (pageModes[currentPage] === 'bw') {
                     a4Preview.classList.add('mode-bw');
@@ -2967,6 +2989,20 @@
                 updateButtons();
             } catch (err) {
                 console.error("Error in refreshAll:", err);
+            }
+        }
+
+        function updateFillPageButton() {
+            if (!fillPageBtn) return;
+            const cfg = getPageConfig(currentPage);
+            if (cfg.preFillBackup) {
+                fillPageBtn.textContent = '↩️ Normal Layout';
+                fillPageBtn.title = 'फोटो को पिछले सामान्य लेआउट में वापस लाएँ';
+                fillPageBtn.style.background = '#dc3545';
+            } else {
+                fillPageBtn.textContent = '📄 Fill Page';
+                fillPageBtn.title = 'इस पेज की फोटो को पूरे प्रिंट एरिया में फैलाएँ (1 फोटो = पूरा पेज)';
+                fillPageBtn.style.background = '#0d9488';
             }
         }
 
@@ -2985,7 +3021,7 @@
                 a4PreviewGrid.style.gridTemplateRows = 'none';
                 a4PreviewGrid.style.gap = '0px';
                 gridArrangeBtn.textContent = '▦ Grid: OFF';
-                gridArrangeBtn.title = 'Grid OFF: Word जैसा free page';
+                gridArrangeBtn.title = 'ग्रिड बंद है — फ्री पेज लेआउट (जैसे Word)';
                 gridArrangeBtn.classList.remove('active-btn');
             } else {
                 a4PreviewGrid.style.display = 'grid';
@@ -2993,7 +3029,7 @@
                 a4PreviewGrid.style.gridTemplateRows = `repeat(${cfg.rows}, minmax(0, 1fr))`;
                 a4PreviewGrid.style.gap = `${cfg.gap}px`;
                 gridArrangeBtn.textContent = '▦ Grid: ON';
-                gridArrangeBtn.title = 'Grid ON: Rows × Columns में बराबर फोटो';
+                gridArrangeBtn.title = 'ग्रिड चालू है — पंक्तियों × कॉलम में बराबर फोटो';
                 gridArrangeBtn.classList.add('active-btn');
             }
         }
@@ -3055,7 +3091,7 @@
                 label.style.fontWeight = 'bold';
                 label.style.color = (p === currentPage) ? '#007bff' : '#333';
                 label.textContent = `P${p}:`;
-                label.title = `Click to go directly to Page ${p}`;
+                label.title = `सीधे पेज ${p} पर जाएँ`;
 
                 label.onclick = () => {
                     currentPage = p;
@@ -3066,7 +3102,8 @@
                 select.style.width = '60px';
                 select.style.fontSize = '11px';
                 select.style.padding = '1px';
-                
+                select.title = `पेज ${p} का रंग मोड चुनें — Color या Black & White`;
+
                 const optColor = document.createElement('option');
                 optColor.value = 'color';
                 optColor.textContent = 'Color';
@@ -3091,7 +3128,7 @@
 
                 const deletePageBtn = document.createElement('button');
                 deletePageBtn.textContent = '🗑️';
-                deletePageBtn.title = `खाली Page ${p} हटाएँ`;
+                deletePageBtn.title = `खाली पेज ${p} को हटाएँ`;
                 deletePageBtn.style.fontSize = '11px';
                 deletePageBtn.style.padding = '1px 4px';
                 deletePageBtn.style.cursor = 'pointer';
@@ -3110,14 +3147,14 @@
 
         function attachPullResizeHandles(imgWrapper, container, img, photoObj, pageIsFree = false) {
             const handles = [
-                { class: 'handle-br', dir: 'br', title: 'Bottom-Right' },
-                { class: 'handle-bl', dir: 'bl', title: 'Bottom-Left' },
-                { class: 'handle-tr', dir: 'tr', title: 'Top-Right' },
-                { class: 'handle-tl', dir: 'tl', title: 'Top-Left' },
-                { class: 'handle-r',  dir: 'r',  title: 'Right' },
-                { class: 'handle-b',  dir: 'b',  title: 'Bottom' },
-                { class: 'handle-l',  dir: 'l',  title: 'Left' },
-                { class: 'handle-t',  dir: 't',  title: 'Top' }
+                { class: 'handle-br', dir: 'br', title: 'नीचे-दाएँ कोना' },
+                { class: 'handle-bl', dir: 'bl', title: 'नीचे-बाएँ कोना' },
+                { class: 'handle-tr', dir: 'tr', title: 'ऊपर-दाएँ कोना' },
+                { class: 'handle-tl', dir: 'tl', title: 'ऊपर-बाएँ कोना' },
+                { class: 'handle-r',  dir: 'r',  title: 'दायाँ किनारा' },
+                { class: 'handle-b',  dir: 'b',  title: 'निचला किनारा' },
+                { class: 'handle-l',  dir: 'l',  title: 'बायाँ किनारा' },
+                { class: 'handle-t',  dir: 't',  title: 'ऊपरी किनारा' }
             ];
 
             const handleEls = [];
@@ -3166,8 +3203,6 @@
 
                     const startX = e.clientX;
                     const startY = e.clientY;
-                    // getBoundingClientRect = screen pixels (already scaled by A4 transform).
-                    // Convert to unscaled CSS px of the 210mm page, else print becomes tiny.
                     const scale = (typeof currentScale === 'number' && currentScale > 0.05) ? currentScale : 1;
                     const startRect = img.getBoundingClientRect();
                     let startWidth = Math.max(20, startRect.width / scale);
@@ -3295,10 +3330,11 @@
             if (selectedPhotoIndex === null || !photos[selectedPhotoIndex]) return;
             const total = Math.max(1, getTotalPages());
             movePageList.innerHTML = '';
-            movePageHint.textContent = `Photo: ${photos[selectedPhotoIndex].name || 'Selected photo'} — page चुनें:`;
+            movePageHint.textContent = `Photo: ${photos[selectedPhotoIndex].name || 'Selected photo'} — पेज चुनें:`;
             for (let p = 1; p <= total; p++) {
                 const b = document.createElement('button');
                 b.textContent = `Page ${p}`;
+                b.title = `फोटो को पेज ${p} पर भेजें`;
                 if ((photos[selectedPhotoIndex].page || 1) === p) b.classList.add('current-page');
                 b.onclick = () => { movePhotoToPage(selectedPhotoIndex, p); movePageModal.style.display='none'; };
                 movePageList.appendChild(b);
@@ -3306,7 +3342,7 @@
             const newBtn = document.createElement('button');
             newBtn.className = 'new-page';
             newBtn.textContent = `➕ +${total + 1}`;
-            newBtn.title = `Create Page ${total + 1} and move photo there`;
+            newBtn.title = `नया पेज ${total + 1} बनाकर फोटो वहाँ भेजें`;
             newBtn.onclick = () => { getPageConfig(total + 1); movePhotoToPage(selectedPhotoIndex, total + 1); currentPage = total + 1; movePageModal.style.display='none'; };
             movePageList.appendChild(newBtn);
             movePageModal.style.display = 'flex';
@@ -3345,15 +3381,10 @@
             refreshAll();
         });
 
-        // 1 फोटो = पूरा प्रिंट पेज (मार्जिन के अंदर)
-        document.getElementById('fillPageBtn').addEventListener('click', () => {
-            saveStateToHistory();
+        // Fill Page टॉगल: पहले दबाने पर पेज भरता है, दूसरी बार दबाने पर सामान्य लेआउट वापस
+        fillPageBtn.addEventListener('click', () => {
             const page = currentPage;
             const cfg = getPageConfig(page);
-            const m = getPrintMargins();
-            // Printable area in cm (A4 21×29.7 cm minus margins)
-            const contentWcm = Math.max(1, (210 - m.left - m.right) / 10);
-            const contentHcm = Math.max(1, (297 - m.top - m.bottom) / 10);
             const indices = getPagePhotoIndices(page);
 
             if (indices.length === 0) {
@@ -3361,7 +3392,68 @@
                 return;
             }
 
-            // Grid OFF + single photo fills whole content box
+            saveStateToHistory();
+
+            // अगर पहले से Fill Page लागू है, तो पुरानी अवस्था वापस लाओ
+            if (cfg.preFillBackup) {
+                const backup = cfg.preFillBackup;
+                cfg.free = backup.free;
+                cfg.rows = backup.rows;
+                cfg.cols = backup.cols;
+                cfg.gap = backup.gap;
+                if (backup.photos && Array.isArray(backup.photos)) {
+                    backup.photos.forEach(b => {
+                        const p = photos[b.idx];
+                        if (!p) return;
+                        p.freeWidth = b.freeWidth;
+                        p.freeHeight = b.freeHeight;
+                        p.customWidth = b.customWidth;
+                        p.customHeight = b.customHeight;
+                        p.pullW = b.pullW;
+                        p.pullH = b.pullH;
+                        p.freeX = b.freeX;
+                        p.freeY = b.freeY;
+                        p.fitMode = b.fitMode;
+                        p.unit = b.unit;
+                        p.offsetX = b.offsetX;
+                        p.offsetY = b.offsetY;
+                    });
+                }
+                delete cfg.preFillBackup;
+                refreshAll();
+                return;
+            }
+
+            // पहले बैकअप बनाओ
+            cfg.preFillBackup = {
+                free: cfg.free,
+                rows: cfg.rows,
+                cols: cfg.cols,
+                gap: cfg.gap,
+                photos: indices.map(idx => {
+                    const p = photos[idx];
+                    return {
+                        idx,
+                        freeWidth: p.freeWidth,
+                        freeHeight: p.freeHeight,
+                        customWidth: p.customWidth,
+                        customHeight: p.customHeight,
+                        pullW: p.pullW,
+                        pullH: p.pullH,
+                        freeX: p.freeX,
+                        freeY: p.freeY,
+                        fitMode: p.fitMode,
+                        unit: p.unit,
+                        offsetX: p.offsetX,
+                        offsetY: p.offsetY
+                    };
+                })
+            };
+
+            const m = getPrintMargins();
+            const contentWcm = Math.max(1, (210 - m.left - m.right) / 10);
+            const contentHcm = Math.max(1, (297 - m.top - m.bottom) / 10);
+
             cfg.free = true;
             cfg.rows = 1;
             cfg.cols = 1;
@@ -3377,7 +3469,6 @@
                 p.offsetX = 0;
                 p.offsetY = 0;
                 if (indices.length === 1) {
-                    // एक फोटो → पूरा प्रिंट एरिया (px भी सेट ताकि print/path दोनों मिलें)
                     const pxW = contentWcm * 37.8;
                     const pxH = contentHcm * 37.8;
                     p.customWidth = contentWcm;
@@ -3390,7 +3481,6 @@
                     p.freeX = 0;
                     p.freeY = 0;
                 } else {
-                    // कई फोटो: बराबर बांटें (2 कॉलम)
                     const cols = Math.min(2, indices.length);
                     const rows = Math.ceil(indices.length / cols);
                     const gapCm = 0.3;
@@ -3498,11 +3588,12 @@
                     card.style.justifyContent = 'center';
                     card.style.alignItems = 'center';
                     card.innerHTML = '<span style="color:#aaa; font-size:12px; font-weight:bold;">Empty Slot</span>';
-                    
+
                     const delBtn = document.createElement('button');
                     delBtn.className = 'tool-btn delete-btn';
                     delBtn.style.marginTop = '6px';
                     delBtn.textContent = '❌ Remove';
+                    delBtn.title = 'खाली स्लॉट हटाएँ';
                     delBtn.onclick = (e) => {
                         e.stopPropagation();
                         saveStateToHistory();
@@ -3517,7 +3608,7 @@
             const container = document.createElement('div');
             container.className = 'photo-container';
             container.style.background = 'transparent';
-            
+
             const imgWrapper = document.createElement('div');
             imgWrapper.className = 'img-wrapper';
             imgWrapper.style.background = 'transparent';
@@ -3533,9 +3624,8 @@
             const img = document.createElement('img');
             img.src = photoObj.url;
             img.alt = photoObj.name || 'Photo';
-            
-            // CRITICAL: Print must ignore screen "All Zoom". Zoom is preview-only.
-            // Using screen zoom in print makes free-layout sizes wrong after rotate/straighten/fit.
+            img.title = photoObj.name || 'Photo';
+
             const globalZoom = isPrint ? 1 : (parseInt(resizeSlider.value) / 100 || 1);
             const hasCustomSize = Number(photoObj.customWidth) > 0 && Number(photoObj.customHeight) > 0;
             const hasManualSize = photoObj.fitMode === 'manual_pull' && Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0;
@@ -3591,8 +3681,6 @@
             if (pageIsFree && savedW && savedH) {
                 const rot = ((Number(photoObj.rotation) % 360) + 360) % 360;
                 const quarterTurn = (rot === 90 || rot === 270);
-                // Card size was already swapped for isPrint+stretch+90/270 above.
-                // Image box must match the final card box so print fills exactly like screen.
                 let displayW = savedW;
                 let displayH = savedH;
                 if (photoObj.fitMode === 'stretch' && quarterTurn && !isPrint) {
@@ -3703,7 +3791,7 @@
                 const dragTarget = pageIsFree ? imgWrapper : container;
                 dragTarget.addEventListener('mousedown', (e) => {
                     if (e.target.closest('.resize-handle') || e.target.closest('.photo-toolbar')) return;
-                    
+
                     e.preventDefault();
                     isDraggingPhoto = true;
                     startX = e.clientX;
@@ -3756,7 +3844,7 @@
 
                         const dx = (me.clientX - startX) / currentScale;
                         const dy = (me.clientY - startY) / currentScale;
-                        
+
                         photoObj.offsetX = Math.round(startOffX + dx);
                         photoObj.offsetY = Math.round(startOffY + dy);
                         imgWrapper.style.transform = `translate(${photoObj.offsetX}px, ${photoObj.offsetY}px)`;
@@ -3777,7 +3865,7 @@
 
                             if (targetSwapIndex !== null && targetSwapIndex !== globalIndex) {
                                 saveStateToHistory();
-                                
+
                                 photoObj.offsetX = 0;
                                 photoObj.offsetY = 0;
                                 if (photos[targetSwapIndex]) {
@@ -3807,7 +3895,7 @@
 
                 const pageSelect = document.createElement('select');
                 pageSelect.className = 'tool-select';
-                pageSelect.title = 'Move to Page (Choose or Enter Page No)';
+                pageSelect.title = 'फोटो को दूसरे पेज पर भेजें (चुनें या नंबर डालें)';
 
                 const defaultOpt = document.createElement('option');
                 defaultOpt.value = '';
@@ -3838,7 +3926,7 @@
                 pageSelect.addEventListener('change', (e) => {
                     e.stopPropagation();
                     let targetPage = e.target.value;
-                    
+
                     if (targetPage === 'prompt') {
                         const userPage = prompt("किस पेज नंबर पर फोटो ट्रांसफर करनी है? (Enter Page Number):", currentPage);
                         if (userPage !== null && userPage.trim() !== '') {
@@ -3855,6 +3943,7 @@
                 const centerBtn = document.createElement('button');
                 centerBtn.className = 'tool-btn';
                 centerBtn.textContent = '🎯 Center';
+                centerBtn.title = 'फोटो को बीच में लाएँ';
                 centerBtn.onclick = (e) => {
                     e.stopPropagation();
                     saveStateToHistory();
@@ -3866,6 +3955,7 @@
                 const rotBtn = document.createElement('button');
                 rotBtn.className = 'tool-btn';
                 rotBtn.textContent = '🔄 Rotate';
+                rotBtn.title = 'फोटो को 90° घुमाएँ';
                 rotBtn.onclick = async (e) => {
                     e.stopPropagation();
                     saveStateToHistory();
@@ -3875,8 +3965,6 @@
                                    (Number(photoObj.freeWidth) > 0 && Number(photoObj.freeHeight) > 0) ||
                                    (Number(photoObj.pullW) > 0 && Number(photoObj.pullH) > 0);
 
-                    // Free-layout या fixed size होने पर: rotation को image में bake करो
-                    // और width↔height swap करो — वरना फोटो पतली/खींची हुई दिखती है।
                     if (pageIsFreeNow || hasSize) {
                         try {
                             const baked = await getRotatedImageUrl(photoObj.url, 90);
@@ -3904,8 +3992,6 @@
                     } else {
                         photoObj.rotation = nextRot;
                     }
-                    // Rotate किसी भी हालत में उसी पेज पर रखे जिस पर फोटो है —
-                    // कभी-कभी currentPage इधर-उधर हो जाता था, अब हमेशा वापस लॉक करते हैं।
                     currentPage = pageNumber;
                     refreshAll();
                 };
@@ -3913,6 +3999,7 @@
                 const perspBtn = document.createElement('button');
                 perspBtn.className = 'tool-btn';
                 perspBtn.textContent = '📐 Straighten';
+                perspBtn.title = 'तिरछी फोटो को सीधा करें (8-point)';
                 perspBtn.onclick = async (e) => {
                     e.stopPropagation();
                     activeEditingIndex = globalIndex;
@@ -3927,10 +4014,11 @@
                 const cropBtn = document.createElement('button');
                 cropBtn.className = 'tool-btn';
                 cropBtn.textContent = '✂️ Crop';
+                cropBtn.title = 'फोटो को काटें';
                 cropBtn.onclick = async (e) => {
                     e.stopPropagation();
                     activeEditingIndex = globalIndex;
-                    
+
                     if (photoObj.rotation !== 0) {
                         const rotatedUrl = await getRotatedImageUrl(photoObj.url, photoObj.rotation);
                         photoObj.url = rotatedUrl;
@@ -3940,7 +4028,7 @@
                     cropImageTarget.src = photoObj.url;
                     cropModal.style.display = 'flex';
                     if (cropperInstance) cropperInstance.destroy();
-                    
+
                     if (window.Cropper) {
                         cropperInstance = new Cropper(cropImageTarget, {
                             viewMode: 0,
@@ -3968,6 +4056,7 @@
                 stretchBtn.textContent = stretchLevel >= 0
                     ? `↔️ Stretch ${stretchLevel === 0 ? '100%' : stretchLevel === 1 ? '90%' : '80%'}`
                     : '↔️ Stretch';
+                stretchBtn.title = 'फोटो को खींचकर फैलाएँ (100% → 90% → 80%)';
                 stretchBtn.onclick = (e) => {
                     e.stopPropagation();
                     saveStateToHistory();
@@ -3986,10 +4075,10 @@
                 const sizeBtn = document.createElement('button');
                 sizeBtn.className = 'tool-btn';
                 sizeBtn.textContent = '📐 Size';
+                sizeBtn.title = 'प्रिंट साइज़ सेट करें';
                 sizeBtn.onclick = async (e) => {
                     e.stopPropagation();
                     activeEditingIndex = globalIndex;
-                    // Size लगाने से पहले pending rotation bake करो ताकि साइज़ सही लगे
                     if (Number(photoObj.rotation) !== 0) {
                         try {
                             const rotatedUrl = await getRotatedImageUrl(photoObj.url, photoObj.rotation);
@@ -4021,7 +4110,7 @@
                     unitSelect.value = currentUnit;
                     widthLabel.textContent = `Width (${currentUnit === 'inch' ? 'in' : 'cm'}):`;
                     heightLabel.textContent = `Height (${currentUnit === 'inch' ? 'in' : 'cm'}):`;
-                    
+
                     const ref = getReferencePrintSize(photoObj, currentUnit);
                     if (originalSizeInfo) {
                         originalSizeInfo.textContent = `Original Size: ${ref.width.toFixed(2)} × ${ref.height.toFixed(2)} ${currentUnit === 'inch' ? 'in' : 'cm'} (${photoObj.originalWidth || 0} × ${photoObj.originalHeight || 0} px)`;
@@ -4046,6 +4135,7 @@
                 const brightBtn = document.createElement('button');
                 brightBtn.className = 'tool-btn';
                 brightBtn.textContent = '☀️ Light';
+                brightBtn.title = 'फोटो की चमक (Brightness) बदलें';
                 brightBtn.onclick = (e) => {
                     e.stopPropagation();
                     activeEditingIndex = globalIndex;
@@ -4058,6 +4148,7 @@
                 const delBtn = document.createElement('button');
                 delBtn.className = 'tool-btn delete-btn';
                 delBtn.textContent = '❌ Delete';
+                delBtn.title = 'फोटो को हटाएँ';
                 delBtn.onclick = (e) => {
                     e.stopPropagation();
                     saveStateToHistory();
@@ -4109,7 +4200,7 @@
             downloadButton.disabled = photos.length === 0;
             downloadCurrentButton.disabled = photos.length === 0;
             downloadPdfButton.disabled = photos.length === 0;
-            
+
             currentPageLabel.textContent = `Current Screen Page: ${currentPage}`;
             totalPagesDisplay.textContent = `Total Pages: ${totalPages}`;
         }
